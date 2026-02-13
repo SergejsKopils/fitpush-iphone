@@ -10,6 +10,7 @@
 <meta name="format-detection" content="telephone=no" />
 <meta name="theme-color" content="#05070c" />
 <link rel="manifest" href="manifest.webmanifest" />
+<script type="module" src="https://unpkg.com/@splinetool/viewer@1.10.59/build/spline-viewer.js"></script>
 <title>FitPush</title>
 
 <style>
@@ -65,6 +66,87 @@ body::after{
 /* ===== Screens routing ===== */
 .screen{display:none; height:100%}
 .screen.active{display:grid}
+
+/* ===== SPLASH SCREEN ===== */
+.screen-splash{
+  grid-template-columns: 1.1fr 1fr;
+  gap: 12px;
+  padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+  max-width: 1080px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+.splash-card{
+  position: relative;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 22px;
+  overflow: hidden;
+  background: linear-gradient(165deg, rgba(255,255,255,.08), rgba(255,255,255,.03) 48%, rgba(0,0,0,.22));
+  backdrop-filter: blur(16px) saturate(125%);
+}
+.splash-spot{
+  position:absolute;
+  width:420px;height:420px;border-radius:50%;
+  left:-120px;top:-220px;
+  background:radial-gradient(circle, rgba(255,255,255,.36) 0%, rgba(200,230,255,.15) 38%, transparent 70%);
+  filter:blur(22px);
+  pointer-events:none;
+}
+.splash-copy{
+  position:relative;
+  z-index:2;
+  padding:34px 30px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  height:100%;
+}
+.splash-kicker{
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.18em;
+  color:rgba(210,225,245,.75);
+}
+.splash-title{
+  margin:10px 0 0;
+  font-size:clamp(2rem,4.2vw,3.2rem);
+  line-height:1.05;
+  letter-spacing:.01em;
+  background:linear-gradient(180deg,#f8fbff,#b9c7dd 72%);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+.splash-text{
+  margin:14px 0 0;
+  color:rgba(215,228,247,.84);
+  max-width:560px;
+  line-height:1.5;
+}
+.splash-actions{
+  margin-top:22px;
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.spline-box{
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 22px;
+  overflow: hidden;
+  min-height: 360px;
+  background: radial-gradient(circle at 30% 10%, rgba(125,211,252,.16) 0%, transparent 44%), #04070d;
+}
+.spline-box spline-viewer,
+.spline-box iframe{
+  width:100%;
+  height:100%;
+  display:block;
+  border:0;
+}
+.splash-mini{
+  font-size:.76rem;
+  color:rgba(188,205,230,.62);
+}
 
 /* ===== CLOCK SCREEN ===== */
 .screen-clock{
@@ -280,6 +362,12 @@ button:active{transform:translateY(1px)}
 .toast.show{display:block}
 
 @media (max-width:640px){
+  .screen-splash{
+    grid-template-columns:1fr;
+    padding:calc(12px + env(safe-area-inset-top)) 10px calc(12px + env(safe-area-inset-bottom));
+  }
+  .splash-copy{padding:22px 18px}
+  .spline-box{min-height:280px}
   .screen-settings{padding:calc(12px + env(safe-area-inset-top)) 10px calc(12px + env(safe-area-inset-bottom))}
   .dial-wrap{width:min(92vw,430px)}
   .core{inset:22%}
@@ -293,8 +381,34 @@ button:active{transform:translateY(1px)}
 <body>
 <div class="app">
 
+  <!-- SCREEN 0: SPLASH -->
+  <section id="screenSplash" class="screen screen-splash active" aria-label="Splash screen">
+    <div class="splash-card">
+      <div class="splash-spot"></div>
+      <div class="splash-copy">
+        <div class="splash-kicker">FitPush Glass Mode</div>
+        <h1 class="splash-title">Interactive 3D + Focus Clock</h1>
+        <p class="splash-text">
+          Плавный стартовый экран в стиле glassmorphism. Перейди в режим часов и используй
+          красивый обратный отсчет как настольный экран во время работы.
+        </p>
+        <div class="splash-actions">
+          <button id="enterApp" class="btn-main">Открыть часы</button>
+          <button id="skipSplash">Пропустить дальше</button>
+        </div>
+        <p class="splash-mini">Можно вернуться через клавишу <b>Space</b> из часов.</p>
+      </div>
+    </div>
+    <div class="spline-box">
+      <spline-viewer
+        loading-anim-type="spinner-small-dark"
+        url="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode">
+      </spline-viewer>
+    </div>
+  </section>
+
   <!-- SCREEN 1: CLOCK -->
-  <section id="screenClock" class="screen screen-clock active" aria-label="Clock screen">
+  <section id="screenClock" class="screen screen-clock" aria-label="Clock screen">
     <div class="clock-shell" id="openSettings" tabindex="0" role="button" aria-label="Open settings">
       <div class="clock-glass"></div>
       <div class="clock-water"></div>
@@ -408,6 +522,7 @@ button:active{transform:translateY(1px)}
 <script>
 const KEY_STATS="fitpush_stats_v1";
 const KEY_PREFS="fitpush_clock_prefs_v1";
+const KEY_SPLASH="fitpush_splash_seen_v1";
 const IS_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
 const IS_STANDALONE=window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;
 
@@ -435,8 +550,11 @@ const S={
 
 const E={
   // Screens
+  screenSplash: document.getElementById("screenSplash"),
   screenClock: document.getElementById("screenClock"),
   screenSettings: document.getElementById("screenSettings"),
+  enterApp: document.getElementById("enterApp"),
+  skipSplash: document.getElementById("skipSplash"),
   openSettings: document.getElementById("openSettings"),
   backClock: document.getElementById("backClock"),
 
@@ -526,13 +644,24 @@ function loadPrefs(){
 }
 
 /* ===== UI: screens ===== */
+function showSplash(){
+  E.screenSplash.classList.add("active");
+  E.screenClock.classList.remove("active");
+  E.screenSettings.classList.remove("active");
+}
 function showClock(){
+  E.screenSplash.classList.remove("active");
   E.screenClock.classList.add("active");
   E.screenSettings.classList.remove("active");
 }
 function showSettings(){
+  E.screenSplash.classList.remove("active");
   E.screenSettings.classList.add("active");
   E.screenClock.classList.remove("active");
+}
+function enterApp(){
+  localStorage.setItem(KEY_SPLASH, "1");
+  showClock();
 }
 
 /* ===== Apply prefs to UI ===== */
@@ -751,6 +880,8 @@ E.skip.addEventListener("click", skip);
 E.snooze.addEventListener("click", snooze);
 
 /* Screens */
+E.enterApp.addEventListener("click", enterApp);
+E.skipSplash.addEventListener("click", enterApp);
 E.openSettings.addEventListener("click", showSettings);
 E.backClock.addEventListener("click", showClock);
 
@@ -800,7 +931,8 @@ document.addEventListener("keydown", e=>{
 
   if(e.code==="Space"){
     e.preventDefault();
-    if(E.screenClock.classList.contains("active")) showSettings();
+    if(E.screenSplash.classList.contains("active")) enterApp();
+    else if(E.screenClock.classList.contains("active")) showSettings();
     else showClock();
   }
   if(k==="s"){ S.run ? pause() : start(); }
@@ -833,6 +965,8 @@ pick(60);
 updNotif();
 render();
 pwa();
+if(localStorage.getItem(KEY_SPLASH)==="1") showClock();
+else showSplash();
 </script>
 </body>
 </html>
