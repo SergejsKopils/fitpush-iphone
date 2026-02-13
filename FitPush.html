@@ -171,55 +171,6 @@ body.fullscreen-dial .clock-shell{
 .clock-hint b{color:rgba(230,240,255,.55); font-weight:600}
 
 .clock-shell:active{transform:translateY(1px) scale(var(--clock-scale))}
-.desk-robot{
-  position:absolute;
-  right:16px;
-  bottom:16px;
-  width:116px;
-  height:138px;
-  opacity:.9;
-  pointer-events:none;
-}
-.desk-robot .aura{
-  position:absolute;inset:auto 8px -4px 8px;height:24px;border-radius:50%;
-  background:radial-gradient(circle,rgba(125,211,252,.26),transparent 70%);
-  filter:blur(7px);
-}
-.desk-robot .head{
-  position:absolute;left:26px;top:4px;width:64px;height:50px;border-radius:14px;
-  border:1px solid rgba(190,225,255,.45);
-  background:linear-gradient(160deg,rgba(255,255,255,.18),rgba(255,255,255,.03) 55%,rgba(0,0,0,.22));
-  box-shadow:0 0 16px rgba(125,211,252,.16), inset 0 0 0 1px rgba(255,255,255,.06);
-  animation:robotBob 3.2s ease-in-out infinite;
-}
-.desk-robot .eyes{
-  position:absolute;left:12px;top:18px;display:flex;gap:12px;
-}
-.desk-robot .eye{
-  width:14px;height:8px;border-radius:8px;
-  background:linear-gradient(90deg,#bae6fd,#67e8f9);
-  box-shadow:0 0 8px rgba(103,232,249,.75);
-  animation:blink 5s infinite;
-}
-.desk-robot .body{
-  position:absolute;left:30px;top:58px;width:56px;height:62px;border-radius:14px;
-  border:1px solid rgba(190,225,255,.35);
-  background:linear-gradient(170deg,rgba(255,255,255,.11),rgba(255,255,255,.02) 60%,rgba(0,0,0,.24));
-}
-.desk-robot .arm{
-  position:absolute;top:70px;width:22px;height:8px;border-radius:10px;
-  background:rgba(190,225,255,.24);border:1px solid rgba(190,225,255,.35);
-}
-.desk-robot .arm.l{left:8px;transform:rotate(20deg)}
-.desk-robot .arm.r{right:8px;transform:rotate(-20deg)}
-@keyframes robotBob{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-4px)}
-}
-@keyframes blink{
-  0%,46%,52%,100%{transform:scaleY(1)}
-  48%,50%{transform:scaleY(.15)}
-}
 
 /* ===== SETTINGS SCREEN ===== */
 .screen-settings{
@@ -334,7 +285,6 @@ button:active{transform:translateY(1px)}
   .core{inset:22%}
   .timeMirror{font-size:clamp(2.4rem,14vw,4.6rem)}
   .clock-shell{height:min(50vw,280px); border-radius:38px}
-  .desk-robot{right:8px;bottom:8px;transform:scale(.82);transform-origin:bottom right}
   .pref input[type="range"]{width:110px}
 }
 </style>
@@ -353,15 +303,6 @@ button:active{transform:translateY(1px)}
       <div class="clock-content">
         <div id="time" class="clock-time">60:00</div>
         <div class="clock-hint">press <b>Space</b> for settings</div>
-      </div>
-      <div class="desk-robot" aria-hidden="true">
-        <div class="head">
-          <div class="eyes"><span class="eye"></span><span class="eye"></span></div>
-        </div>
-        <div class="body"></div>
-        <div class="arm l"></div>
-        <div class="arm r"></div>
-        <div class="aura"></div>
       </div>
     </div>
   </section>
