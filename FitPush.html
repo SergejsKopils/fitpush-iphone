@@ -10,7 +10,6 @@
 <meta name="format-detection" content="telephone=no" />
 <meta name="theme-color" content="#05070c" />
 <link rel="manifest" href="manifest.webmanifest" />
-<script type="module" src="https://unpkg.com/@splinetool/viewer@1.10.59/build/spline-viewer.js"></script>
 <title>FitPush</title>
 
 <style>
@@ -66,87 +65,6 @@ body::after{
 /* ===== Screens routing ===== */
 .screen{display:none; height:100%}
 .screen.active{display:grid}
-
-/* ===== SPLASH SCREEN ===== */
-.screen-splash{
-  grid-template-columns: 1.1fr 1fr;
-  gap: 12px;
-  padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
-  max-width: 1080px;
-  margin: 0 auto;
-  align-items: stretch;
-}
-.splash-card{
-  position: relative;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 22px;
-  overflow: hidden;
-  background: linear-gradient(165deg, rgba(255,255,255,.08), rgba(255,255,255,.03) 48%, rgba(0,0,0,.22));
-  backdrop-filter: blur(16px) saturate(125%);
-}
-.splash-spot{
-  position:absolute;
-  width:420px;height:420px;border-radius:50%;
-  left:-120px;top:-220px;
-  background:radial-gradient(circle, rgba(255,255,255,.36) 0%, rgba(200,230,255,.15) 38%, transparent 70%);
-  filter:blur(22px);
-  pointer-events:none;
-}
-.splash-copy{
-  position:relative;
-  z-index:2;
-  padding:34px 30px;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  height:100%;
-}
-.splash-kicker{
-  font-size:.72rem;
-  text-transform:uppercase;
-  letter-spacing:.18em;
-  color:rgba(210,225,245,.75);
-}
-.splash-title{
-  margin:10px 0 0;
-  font-size:clamp(2rem,4.2vw,3.2rem);
-  line-height:1.05;
-  letter-spacing:.01em;
-  background:linear-gradient(180deg,#f8fbff,#b9c7dd 72%);
-  -webkit-background-clip:text;
-  background-clip:text;
-  color:transparent;
-}
-.splash-text{
-  margin:14px 0 0;
-  color:rgba(215,228,247,.84);
-  max-width:560px;
-  line-height:1.5;
-}
-.splash-actions{
-  margin-top:22px;
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-}
-.spline-box{
-  border: 1px solid rgba(255,255,255,.10);
-  border-radius: 22px;
-  overflow: hidden;
-  min-height: 360px;
-  background: radial-gradient(circle at 30% 10%, rgba(125,211,252,.16) 0%, transparent 44%), #04070d;
-}
-.spline-box spline-viewer,
-.spline-box iframe{
-  width:100%;
-  height:100%;
-  display:block;
-  border:0;
-}
-.splash-mini{
-  font-size:.76rem;
-  color:rgba(188,205,230,.62);
-}
 
 /* ===== CLOCK SCREEN ===== */
 .screen-clock{
@@ -253,6 +171,55 @@ body.fullscreen-dial .clock-shell{
 .clock-hint b{color:rgba(230,240,255,.55); font-weight:600}
 
 .clock-shell:active{transform:translateY(1px) scale(var(--clock-scale))}
+.desk-robot{
+  position:absolute;
+  right:16px;
+  bottom:16px;
+  width:116px;
+  height:138px;
+  opacity:.9;
+  pointer-events:none;
+}
+.desk-robot .aura{
+  position:absolute;inset:auto 8px -4px 8px;height:24px;border-radius:50%;
+  background:radial-gradient(circle,rgba(125,211,252,.26),transparent 70%);
+  filter:blur(7px);
+}
+.desk-robot .head{
+  position:absolute;left:26px;top:4px;width:64px;height:50px;border-radius:14px;
+  border:1px solid rgba(190,225,255,.45);
+  background:linear-gradient(160deg,rgba(255,255,255,.18),rgba(255,255,255,.03) 55%,rgba(0,0,0,.22));
+  box-shadow:0 0 16px rgba(125,211,252,.16), inset 0 0 0 1px rgba(255,255,255,.06);
+  animation:robotBob 3.2s ease-in-out infinite;
+}
+.desk-robot .eyes{
+  position:absolute;left:12px;top:18px;display:flex;gap:12px;
+}
+.desk-robot .eye{
+  width:14px;height:8px;border-radius:8px;
+  background:linear-gradient(90deg,#bae6fd,#67e8f9);
+  box-shadow:0 0 8px rgba(103,232,249,.75);
+  animation:blink 5s infinite;
+}
+.desk-robot .body{
+  position:absolute;left:30px;top:58px;width:56px;height:62px;border-radius:14px;
+  border:1px solid rgba(190,225,255,.35);
+  background:linear-gradient(170deg,rgba(255,255,255,.11),rgba(255,255,255,.02) 60%,rgba(0,0,0,.24));
+}
+.desk-robot .arm{
+  position:absolute;top:70px;width:22px;height:8px;border-radius:10px;
+  background:rgba(190,225,255,.24);border:1px solid rgba(190,225,255,.35);
+}
+.desk-robot .arm.l{left:8px;transform:rotate(20deg)}
+.desk-robot .arm.r{right:8px;transform:rotate(-20deg)}
+@keyframes robotBob{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-4px)}
+}
+@keyframes blink{
+  0%,46%,52%,100%{transform:scaleY(1)}
+  48%,50%{transform:scaleY(.15)}
+}
 
 /* ===== SETTINGS SCREEN ===== */
 .screen-settings{
@@ -362,17 +329,12 @@ button:active{transform:translateY(1px)}
 .toast.show{display:block}
 
 @media (max-width:640px){
-  .screen-splash{
-    grid-template-columns:1fr;
-    padding:calc(12px + env(safe-area-inset-top)) 10px calc(12px + env(safe-area-inset-bottom));
-  }
-  .splash-copy{padding:22px 18px}
-  .spline-box{min-height:280px}
   .screen-settings{padding:calc(12px + env(safe-area-inset-top)) 10px calc(12px + env(safe-area-inset-bottom))}
   .dial-wrap{width:min(92vw,430px)}
   .core{inset:22%}
   .timeMirror{font-size:clamp(2.4rem,14vw,4.6rem)}
   .clock-shell{height:min(50vw,280px); border-radius:38px}
+  .desk-robot{right:8px;bottom:8px;transform:scale(.82);transform-origin:bottom right}
   .pref input[type="range"]{width:110px}
 }
 </style>
@@ -381,34 +343,8 @@ button:active{transform:translateY(1px)}
 <body>
 <div class="app">
 
-  <!-- SCREEN 0: SPLASH -->
-  <section id="screenSplash" class="screen screen-splash active" aria-label="Splash screen">
-    <div class="splash-card">
-      <div class="splash-spot"></div>
-      <div class="splash-copy">
-        <div class="splash-kicker">FitPush Glass Mode</div>
-        <h1 class="splash-title">Interactive 3D + Focus Clock</h1>
-        <p class="splash-text">
-          Плавный стартовый экран в стиле glassmorphism. Перейди в режим часов и используй
-          красивый обратный отсчет как настольный экран во время работы.
-        </p>
-        <div class="splash-actions">
-          <button id="enterApp" class="btn-main">Открыть часы</button>
-          <button id="skipSplash">Пропустить дальше</button>
-        </div>
-        <p class="splash-mini">Можно вернуться через клавишу <b>Space</b> из часов.</p>
-      </div>
-    </div>
-    <div class="spline-box">
-      <spline-viewer
-        loading-anim-type="spinner-small-dark"
-        url="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode">
-      </spline-viewer>
-    </div>
-  </section>
-
   <!-- SCREEN 1: CLOCK -->
-  <section id="screenClock" class="screen screen-clock" aria-label="Clock screen">
+  <section id="screenClock" class="screen screen-clock active" aria-label="Clock screen">
     <div class="clock-shell" id="openSettings" tabindex="0" role="button" aria-label="Open settings">
       <div class="clock-glass"></div>
       <div class="clock-water"></div>
@@ -417,6 +353,15 @@ button:active{transform:translateY(1px)}
       <div class="clock-content">
         <div id="time" class="clock-time">60:00</div>
         <div class="clock-hint">press <b>Space</b> for settings</div>
+      </div>
+      <div class="desk-robot" aria-hidden="true">
+        <div class="head">
+          <div class="eyes"><span class="eye"></span><span class="eye"></span></div>
+        </div>
+        <div class="body"></div>
+        <div class="arm l"></div>
+        <div class="arm r"></div>
+        <div class="aura"></div>
       </div>
     </div>
   </section>
@@ -522,7 +467,6 @@ button:active{transform:translateY(1px)}
 <script>
 const KEY_STATS="fitpush_stats_v1";
 const KEY_PREFS="fitpush_clock_prefs_v1";
-const KEY_SPLASH="fitpush_splash_seen_v1";
 const IS_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
 const IS_STANDALONE=window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;
 
@@ -550,11 +494,8 @@ const S={
 
 const E={
   // Screens
-  screenSplash: document.getElementById("screenSplash"),
   screenClock: document.getElementById("screenClock"),
   screenSettings: document.getElementById("screenSettings"),
-  enterApp: document.getElementById("enterApp"),
-  skipSplash: document.getElementById("skipSplash"),
   openSettings: document.getElementById("openSettings"),
   backClock: document.getElementById("backClock"),
 
@@ -644,24 +585,13 @@ function loadPrefs(){
 }
 
 /* ===== UI: screens ===== */
-function showSplash(){
-  E.screenSplash.classList.add("active");
-  E.screenClock.classList.remove("active");
-  E.screenSettings.classList.remove("active");
-}
 function showClock(){
-  E.screenSplash.classList.remove("active");
   E.screenClock.classList.add("active");
   E.screenSettings.classList.remove("active");
 }
 function showSettings(){
-  E.screenSplash.classList.remove("active");
   E.screenSettings.classList.add("active");
   E.screenClock.classList.remove("active");
-}
-function enterApp(){
-  localStorage.setItem(KEY_SPLASH, "1");
-  showClock();
 }
 
 /* ===== Apply prefs to UI ===== */
@@ -880,8 +810,6 @@ E.skip.addEventListener("click", skip);
 E.snooze.addEventListener("click", snooze);
 
 /* Screens */
-E.enterApp.addEventListener("click", enterApp);
-E.skipSplash.addEventListener("click", enterApp);
 E.openSettings.addEventListener("click", showSettings);
 E.backClock.addEventListener("click", showClock);
 
@@ -931,8 +859,7 @@ document.addEventListener("keydown", e=>{
 
   if(e.code==="Space"){
     e.preventDefault();
-    if(E.screenSplash.classList.contains("active")) enterApp();
-    else if(E.screenClock.classList.contains("active")) showSettings();
+    if(E.screenClock.classList.contains("active")) showSettings();
     else showClock();
   }
   if(k==="s"){ S.run ? pause() : start(); }
@@ -965,8 +892,7 @@ pick(60);
 updNotif();
 render();
 pwa();
-if(localStorage.getItem(KEY_SPLASH)==="1") showClock();
-else showSplash();
+showClock();
 </script>
 </body>
 </html>
