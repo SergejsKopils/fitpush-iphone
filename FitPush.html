@@ -68,26 +68,14 @@ body::after{
 
 /* ===== CLOCK SCREEN ===== */
 .screen-clock{
-  place-items:center;
-  background:#05070c;
+  grid-template-rows:auto 1fr auto;
+  background:#000;
+  padding:calc(8px + env(safe-area-inset-top)) 14px calc(10px + env(safe-area-inset-bottom));
 }
 
 .clock-shell{
-  position:relative;
-  width:min(92vw, 980px);
-  height:min(42vw, 360px);
-  max-height:360px;
-  border-radius:46px;
-  background:#03050a;
-  border:1px solid rgba(255,255,255,.08);
-  box-shadow:0 60px 140px rgba(0,0,0,.65);
-  overflow:hidden;
-  outline:none;
-  cursor:pointer;
-  user-select:none;
-
-  transform: scale(var(--clock-scale));
-  filter: brightness(var(--clock-bright));
+  position:relative; width:100%; height:100%;
+  outline:none; cursor:pointer; user-select:none;
 }
 
 /* full-screen dial option */
@@ -100,56 +88,58 @@ body.fullscreen-dial .clock-shell{
   box-shadow:none;
 }
 
-.clock-glass{
-  position:absolute; inset:0;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.015) 45%, rgba(0,0,0,.25)),
-    radial-gradient(circle at 20% 12%, rgba(255,255,255,.09), transparent 55%);
-  backdrop-filter: blur(16px) saturate(110%);
-  opacity:.95;
+.ios-status{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:2px 2px 0; color:#f5f7fb; font-size:1.05rem; font-weight:700; letter-spacing:.01em;
 }
-
-.clock-water{
-  position:absolute; inset:-20%;
-  opacity:.12;
-  background:
-    radial-gradient(circle at 30% 30%, rgba(255,255,255,.35), transparent 40%),
-    radial-gradient(circle at 70% 60%, rgba(255,255,255,.25), transparent 45%),
-    radial-gradient(circle at 40% 80%, rgba(255,255,255,.18), transparent 50%);
-  filter: blur(18px);
-  animation: waterMove 10s ease-in-out infinite alternate;
-  mix-blend-mode: screen;
-  pointer-events:none;
+.ios-icons{display:flex; gap:8px; align-items:center}
+.sig{display:flex; gap:2px; align-items:flex-end}
+.sig i{display:block; width:3px; border-radius:2px; background:#fff; opacity:.9}
+.sig i:nth-child(1){height:4px}
+.sig i:nth-child(2){height:6px}
+.sig i:nth-child(3){height:8px}
+.sig i:nth-child(4){height:10px}
+.wifi{
+  width:14px;height:10px;position:relative;display:block;
 }
-@keyframes waterMove{
-  from{ transform: translate(-2%, -1%) scale(1.02) rotate(-1deg); }
-  to  { transform: translate(2%, 1%) scale(1.06) rotate(1deg); }
+.wifi::before,.wifi::after{
+  content:"";position:absolute;left:50%;transform:translateX(-50%);
+  border:2px solid #fff;border-top-color:#fff;border-right-color:transparent;border-bottom-color:transparent;border-left-color:transparent;border-radius:50%;
 }
-
-.clock-vignette{
-  position:absolute; inset:0;
-  background: radial-gradient(circle at 50% 45%, transparent 40%, rgba(0,0,0,var(--clock-vignette)) 100%);
-  pointer-events:none;
+.wifi::before{width:14px;height:14px;top:-7px}
+.wifi::after{width:8px;height:8px;top:-4px}
+.battery{
+  width:26px;height:12px;border:2px solid #fff;border-radius:4px;position:relative;
+}
+.battery::before{
+  content:"";position:absolute;right:-4px;top:2px;width:2px;height:6px;background:#fff;border-radius:1px;
+}
+.battery::after{
+  content:"";position:absolute;left:2px;top:2px;width:16px;height:6px;background:#fff;border-radius:2px;
 }
 
 .clock-content{
-  position:absolute; inset:0;
-  display:grid;
-  place-items:center;
+  position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
   text-align:center;
-  padding:24px;
+  padding:24px 16px 52px;
+  transform:scale(var(--clock-scale));
+  filter:brightness(var(--clock-bright));
 }
 
-/* time output: monochrome, big */
+.brand-mark{
+  font-size:clamp(3.6rem,18vw,8.8rem); font-weight:900; line-height:.84; letter-spacing:.01em;
+  text-transform:uppercase; color:#f1f3f6;
+  transform:skewY(-8deg);
+  margin-top:-4vh;
+}
+.brand-mark span{display:block}
+
 .clock-time{
+  margin-top:26px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: clamp(4.2rem, 16vw, 9rem);
-  letter-spacing:.10em;
-  font-variant-numeric:tabular-nums;
-  color:#f7fbff;
-  text-shadow:
-    0 0 calc(18px * var(--clock-glow)) rgba(255,255,255,.16),
-    0 0 calc(60px * var(--clock-glow)) rgba(255,255,255,.08);
+  font-size: clamp(2.1rem, 7vw, 3.5rem);
+  letter-spacing:.18em; font-variant-numeric:tabular-nums; color:#f7fbff;
+  text-shadow:0 0 calc(16px * var(--clock-glow)) rgba(255,255,255,.16);
 }
 
 /* seconds smaller */
@@ -161,7 +151,7 @@ body.fullscreen-dial .clock-shell{
 
 .clock-hint{
   position:absolute;
-  bottom:18px;
+  bottom:58px;
   left:50%;
   transform:translateX(-50%);
   font-size:.78rem;
@@ -169,6 +159,10 @@ body.fullscreen-dial .clock-shell{
   letter-spacing:.06em;
 }
 .clock-hint b{color:rgba(230,240,255,.55); font-weight:600}
+.home-indicator{
+  position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
+  width:min(36vw,140px);height:5px;border-radius:999px;background:rgba(230,235,245,.55);
+}
 
 .clock-shell:active{transform:translateY(1px) scale(var(--clock-scale))}
 
@@ -295,15 +289,21 @@ button:active{transform:translateY(1px)}
 
   <!-- SCREEN 1: CLOCK -->
   <section id="screenClock" class="screen screen-clock active" aria-label="Clock screen">
+    <div class="ios-status">
+      <div id="statusClock">9:41</div>
+      <div class="ios-icons" aria-hidden="true">
+        <span class="sig"><i></i><i></i><i></i><i></i></span>
+        <span class="wifi"></span>
+        <span class="battery"></span>
+      </div>
+    </div>
     <div class="clock-shell" id="openSettings" tabindex="0" role="button" aria-label="Open settings">
-      <div class="clock-glass"></div>
-      <div class="clock-water"></div>
-      <div class="clock-vignette"></div>
-
       <div class="clock-content">
+        <div class="brand-mark" aria-hidden="true"><span>FIT</span><span>PUSH</span></div>
         <div id="time" class="clock-time">60:00</div>
         <div class="clock-hint">press <b>Space</b> for settings</div>
       </div>
+      <div class="home-indicator" aria-hidden="true"></div>
     </div>
   </section>
 
@@ -441,6 +441,7 @@ const E={
   backClock: document.getElementById("backClock"),
 
   // Clock output
+  statusClock: document.getElementById("statusClock"),
   time: document.getElementById("time"),
   timeMirror: document.getElementById("timeMirror"),
 
@@ -496,6 +497,9 @@ function fmtMMSS_withSeconds(s){
   return `${mm}:<span class="sec">${ss}</span>`;
 }
 function day(d=new Date()){return d.toISOString().slice(0,10)}
+function nowHM(){
+  return new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
+}
 
 /* ===== Storage ===== */
 function saveStats(){ localStorage.setItem(KEY_STATS, JSON.stringify(S.stats)); }
@@ -592,6 +596,7 @@ function render(){
   E.stToday.textContent=String(S.stats.today||0);
   E.stPush.textContent=String(S.stats.push||0);
   E.stStreak.textContent=String(S.stats.streak||0);
+  E.statusClock.textContent = nowHM();
 
   document.title=(S.run?fmtMMSS(S.left)+" - ":"")+"FitPush";
 }
@@ -834,6 +839,7 @@ updNotif();
 render();
 pwa();
 showClock();
+setInterval(()=>{ E.statusClock.textContent = nowHM(); }, 1000);
 </script>
 </body>
 </html>
