@@ -4,136 +4,244 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="FitPush" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="format-detection" content="telephone=no" />
-<meta name="theme-color" content="#0b1220" />
+<meta name="theme-color" content="#06090f" />
 <link rel="manifest" href="manifest.webmanifest" />
-<title>FitPush - Умные напоминания</title>
+<title>FitPush</title>
 <style>
-:root{--bg:#edf3f7;--card:#fff;--ink:#102033;--muted:#5f7286;--line:#d8e3ed;--brand:#0d9488;--brand2:#0284c7;--ok:#15803d;--warn:#b45309;--danger:#dc2626}
-*{box-sizing:border-box}body{margin:0;color:var(--ink);font-family:"Segoe UI",Tahoma,sans-serif;background:radial-gradient(circle at 8% -10%,#d2f6ef 0%,transparent 42%),radial-gradient(circle at 90% 4%,#dbeafe 0%,transparent 44%),var(--bg)}
-.app{max-width:1060px;margin:0 auto;padding:calc(18px + env(safe-area-inset-top)) 14px calc(20px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1.35fr 1fr;gap:12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 32px rgba(15,23,42,.12)}
-.main{padding:16px;display:flex;flex-direction:column;gap:12px}.side{padding:12px;display:flex;flex-direction:column;gap:10px}
-.head{display:flex;justify-content:space-between;gap:10px}.title{margin:0;font-size:1.5rem}.sub{margin:4px 0 0;color:var(--muted);font-size:.9rem}
-.pill{padding:7px 10px;border-radius:999px;border:1px solid var(--line);font-size:.78rem;color:var(--muted)}.pill.run{background:#f0fdf4;border-color:#86efac;color:var(--ok)}.pill.pause{background:#fffbeb;border-color:#fed7aa;color:var(--warn)}
-.timer{border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center;background:#fbfeff}.label{margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.76rem}
-.clock{margin:0;font-size:clamp(2.4rem,7vw,4rem);font-variant-numeric:tabular-nums}.progress{margin-top:10px;height:10px;border:1px solid #d2dee8;border-radius:999px;overflow:hidden;background:#eaf1f6}.progress>div{height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--brand2))}
-.row,.presets,.badges,.actions{display:flex;gap:8px;flex-wrap:wrap}button,input,select{font:inherit}button{border:1px solid transparent;border-radius:10px;padding:9px 12px;cursor:pointer;font-weight:600}
-.b-main{background:var(--brand);color:#fff}.b-soft{background:#f7fafc;border-color:var(--line)}.b-ok{background:#16a34a;color:#fff}.b-skip{background:#f1f5f9;border-color:#d2dbe5}.presets button.active{background:#0f766e;color:#fff}
-.badge{border:1px solid #c8d8e6;background:#f5fbff;color:#1e3a56;border-radius:999px;padding:5px 9px;font-size:.76rem}
-.activity{display:none;border:1px dashed #97acbe;border-radius:12px;background:#f9fcff;padding:12px}.activity.show{display:block}.activity h3{margin:0 0 6px}.hint{color:var(--muted);font-size:.84rem}
-.toast{display:none;border:1px solid #bbf7d0;background:#f0fdf4;color:#166534;border-radius:10px;padding:8px 10px;font-size:.85rem}.toast.show{display:block}
-.h3{margin:2px 0 0;font-size:1rem}.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tile{border:1px solid var(--line);border-radius:10px;background:#f9fcfe;padding:9px}.v{margin:0;font-weight:800;font-size:1.38rem}.k{margin:3px 0 0;color:var(--muted);font-size:.72rem;text-transform:uppercase}
-.settings{border:1px solid var(--line);border-radius:10px;background:#fbfdff;padding:7px 10px}.srow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}.srow:last-child{border-bottom:none}
-.lbl{font-size:.9rem;font-weight:600}.desc{color:var(--muted);font-size:.75rem;margin-top:2px}select,input[type="number"],input[type="time"]{border:1px solid #c7d4df;border-radius:9px;padding:6px 8px;background:#fff;min-width:120px}
-.sw{width:48px;height:26px;border:1px solid #c4d3de;border-radius:999px;background:#e5edf3;position:relative}.sw::after{content:"";width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s}.sw.on{background:#99f6e4;border-color:#2dd4bf}.sw.on::after{transform:translateX(21px)}
-.week{border:1px solid var(--line);border-radius:10px;background:#fbfdff;padding:9px}.bars{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;align-items:end;height:88px;margin-top:8px}.bar{border-radius:8px 8px 4px 4px;background:linear-gradient(180deg,#22d3ee,#0891b2);min-height:6px;position:relative}.bar small{position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);color:var(--muted);font-size:.66rem}
-.hist{border:1px solid var(--line);border-radius:10px;background:#fbfeff;max-height:200px;overflow:auto}.entry{padding:9px 10px;border-bottom:1px solid #e2ebf2;display:flex;justify-content:space-between;gap:8px;font-size:.86rem}.entry:last-child{border-bottom:none}.meta{color:var(--muted);font-size:.75rem}.empty{padding:12px;color:var(--muted)}
-.ios{display:none;border:1px solid #c8d6e7;border-radius:10px;background:#f8fbff;padding:9px;color:#334155;font-size:.84rem}.ios.show{display:block}
-.overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.58);padding:14px;z-index:40}.overlay.show{display:flex}.modal{width:min(500px,100%);background:#fff;border:1px solid #d4e2ec;border-radius:14px;padding:14px}.modal h2{margin:0 0 6px}.tip{margin:0;color:var(--muted);font-size:.78rem}
-@media (max-width:920px){.app{grid-template-columns:1fr}}
+:root{--bg:#05070c;--glass:rgba(255,255,255,.06);--line:rgba(255,255,255,.16);--text:#f5f7fb;--muted:#9aa6bb;--accent:#7dd3fc;--accent2:#22d3ee;--ok:#86efac;--warn:#fdba74;--danger:#fca5a5}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;color:var(--text);font-family:"Segoe UI",Tahoma,sans-serif;background:radial-gradient(circle at 50% -10%,#132238 0%,transparent 45%),radial-gradient(circle at 12% 90%,#112030 0%,transparent 40%),#05070c;overflow:hidden}
+body::before{content:"";position:fixed;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.02),transparent 40%),radial-gradient(circle at 30% 30%,rgba(125,211,252,.05),transparent 55%);pointer-events:none}
+.app{height:100%;display:grid;grid-template-rows:auto 1fr auto;gap:14px;padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));max-width:980px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.brand{font-size:.95rem;letter-spacing:.16em;text-transform:uppercase;color:#dbe6ff}
+.status{font-size:.72rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:6px 10px;background:rgba(255,255,255,.03)}
+.stage{display:flex;align-items:center;justify-content:center}
+.dial-wrap{position:relative;width:min(76vw,560px);aspect-ratio:1/1;display:grid;place-items:center}
+.dial-glow{position:absolute;inset:7%;border-radius:50%;filter:blur(24px);background:radial-gradient(circle,#22d3ee33 0%,transparent 70%)}
+.dial{position:relative;width:100%;height:100%;border-radius:50%;border:1px solid var(--line);background:linear-gradient(160deg,rgba(255,255,255,.1),rgba(255,255,255,.03) 45%,rgba(0,0,0,.18));backdrop-filter:blur(14px) saturate(120%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 40px 80px rgba(0,0,0,.45)}
+.ring{position:absolute;inset:6%;transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:rgba(255,255,255,.09);stroke-width:8}
+.ring-fg{fill:none;stroke:url(#rg);stroke-width:8;stroke-linecap:round;filter:drop-shadow(0 0 10px rgba(34,211,238,.45));transition:stroke-dashoffset .25s linear}
+.tick{position:absolute;inset:9%;border-radius:50%;background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.16) 0deg 1deg,transparent 1deg 6deg);mask:radial-gradient(circle,transparent 73%,#000 74%)}
+.core{position:absolute;inset:19%;border-radius:50%;border:1px solid rgba(255,255,255,.15);background:radial-gradient(circle at 40% 20%,rgba(255,255,255,.18),rgba(255,255,255,.03) 45%,rgba(0,0,0,.2));display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:14px}
+.phase{font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.time{margin:8px 0 6px;font-size:clamp(2.4rem,10vw,5.4rem);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.next{font-size:.78rem;color:#c7d6ea;min-height:18px}
+.bottom{display:grid;gap:10px}
+.controls,.presets,.meta{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+button{font:inherit;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer;backdrop-filter:blur(8px)}
+button:active{transform:translateY(1px)}
+.btn-main{background:linear-gradient(135deg,rgba(34,211,238,.32),rgba(125,211,252,.2));border-color:rgba(125,211,252,.45)}
+.presets button{font-size:.86rem;padding:8px 11px;color:#d8e5f7}
+.presets button.active{background:rgba(34,211,238,.24);border-color:rgba(34,211,238,.58)}
+.meta{color:var(--muted);font-size:.78rem}
+.dot{opacity:.35}
+.chip{border:1px solid var(--line);padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.04)}
+.overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(2,6,14,.72);backdrop-filter:blur(8px)}
+.overlay.show{display:flex}
+.modal{width:min(460px,100%);border:1px solid var(--line);border-radius:18px;background:linear-gradient(165deg,rgba(255,255,255,.14),rgba(255,255,255,.05));backdrop-filter:blur(12px);padding:16px}
+.modal h2{margin:0 0 8px;font-size:1.25rem}
+.modal p{margin:4px 0;color:#d8e5f7}
+.modal .hint{font-size:.9rem;color:var(--muted)}
+.modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);padding:10px 12px;border-radius:999px;border:1px solid #2e455d;background:rgba(8,16,28,.86);color:#d8e5f7;font-size:.82rem;display:none}
+.toast.show{display:block}
+@media (max-width:640px){.app{padding:calc(12px + env(safe-area-inset-top)) 10px calc(12px + env(safe-area-inset-bottom))}.dial-wrap{width:min(92vw,430px)}.core{inset:20%}.time{font-size:clamp(2.2rem,14vw,4.2rem)}}
 </style>
 </head>
 <body>
 <div class="app">
-<section class="card main">
-<div class="head"><div><h1 class="title">FitPush</h1><p class="sub">Умные напоминания для разминки во время работы</p></div><div id="pill" class="pill">Ожидание</div></div>
-<div class="timer"><p id="phase" class="label">До следующей разминки</p><h2 id="clock" class="clock">60:00</h2><div class="progress"><div id="bar"></div></div></div>
-<div class="row"><button id="start" class="b-main">Старт</button><button id="pause" class="b-soft">Пауза</button><button id="reset" class="b-soft">Сброс</button><button id="now" class="b-soft">Сейчас</button></div>
-<div id="presets" class="presets"><button data-min="25">25м</button><button data-min="45">45м</button><button data-min="60" class="active">60м</button><button data-min="90">90м</button></div>
-<div class="badges"><span id="modeBadge" class="badge">Режим: Сбалансированный</span><span id="adBadge" class="badge">Адаптивный таймер: выкл</span></div>
-<section id="act" class="activity"><h3 id="actTitle"></h3><p id="actDose"></p><p id="actHint" class="hint"></p></section>
+  <div class="top">
+    <div class="brand">FitPush</div>
+    <div id="status" class="status">Ожидание</div>
+  </div>
+
+  <div class="stage">
+    <div class="dial-wrap">
+      <div class="dial-glow"></div>
+      <div class="dial">
+        <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
+          <defs>
+            <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#7dd3fc"></stop>
+              <stop offset="100%" stop-color="#22d3ee"></stop>
+            </linearGradient>
+          </defs>
+          <circle class="ring-bg" cx="100" cy="100" r="88"></circle>
+          <circle id="ringFg" class="ring-fg" cx="100" cy="100" r="88"></circle>
+        </svg>
+        <div class="tick"></div>
+        <div class="core">
+          <div id="phase" class="phase">До разминки</div>
+          <div id="time" class="time">60:00</div>
+          <div id="next" class="next">Выбери интервал и нажми Старт</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="controls">
+      <button id="start" class="btn-main">Старт</button>
+      <button id="pause">Пауза</button>
+      <button id="reset">Сброс</button>
+      <button id="now">Сейчас</button>
+      <button id="notif">Уведомления</button>
+    </div>
+    <div id="presets" class="presets">
+      <button data-min="25">25м</button>
+      <button data-min="45">45м</button>
+      <button data-min="60" class="active">60м</button>
+      <button data-min="90">90м</button>
+    </div>
+    <div class="meta">
+      <span class="chip">Сегодня: <b id="stToday">0</b></span>
+      <span class="chip">Стрик: <b id="stStreak">0</b></span>
+      <span class="chip">Отжиманий: <b id="stPush">0</b></span>
+    </div>
+  </div>
+</div>
+
+<div id="overlay" class="overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <h2 id="mTitle">Время размяться</h2>
+    <p id="mDose"></p>
+    <p id="mHint" class="hint"></p>
+    <div class="modal-actions">
+      <button id="done" class="btn-main">Сделано</button>
+      <button id="snooze">Отложить 5 мин</button>
+      <button id="skip">Пропустить</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="toast"></div>
-<p class="tip">Горячие клавиши: S старт/пауза, R сброс, N напомнить сейчас.</p>
-</section>
-<aside class="card side">
-<h3 class="h3">Сегодня</h3>
-<div class="stats"><div class="tile"><p id="sDone" class="v">0</p><p class="k">Разминок</p></div><div class="tile"><p id="sMin" class="v">0</p><p class="k">Минут</p></div><div class="tile"><p id="sPush" class="v">0</p><p class="k">Отжиманий</p></div><div class="tile"><p id="sStreak" class="v">0</p><p class="k">Дней подряд</p></div></div>
-<h3 class="h3">Настройки</h3>
-<div class="settings">
-<div class="srow"><div><div class="lbl">Режим нагрузки</div><div class="desc">Влияет на упражнения</div></div><select id="mode"><option value="easy">Легкий</option><option value="normal" selected>Сбалансированный</option><option value="intense">Интенсивный</option></select></div>
-<div class="srow"><div><div class="lbl">Свой интервал (мин)</div><div class="desc">Переопределяет пресеты</div></div><input id="custom" type="number" min="5" max="180" step="5" value="60" /></div>
-<div class="srow"><div><div class="lbl">Автостарт</div><div class="desc">Новый цикл после "Сделано"</div></div><button id="auto" class="sw on" aria-label="Автостарт"></button></div>
-<div class="srow"><div><div class="lbl">Тихие часы</div><div class="desc">Без всплывающих напоминаний</div></div><button id="quiet" class="sw" aria-label="Тихие часы"></button></div>
-<div class="srow"><div><div class="lbl">Период тихих часов</div><div class="desc">Например 22:00 - 08:00</div></div><div style="display:flex;gap:5px"><input id="qStart" type="time" value="22:00" /><input id="qEnd" type="time" value="08:00" /></div></div>
-<div class="srow"><div><div class="lbl">Звук</div><div class="desc">Сигнал напоминания</div></div><select id="sound"><option value="soft">Мягкий</option><option value="bell" selected>Колокол</option><option value="pulse">Пульс</option></select></div>
-<div class="srow"><div><div class="lbl">Уведомления</div><div class="desc">Push браузера</div></div><button id="notif" class="b-soft" style="padding:7px 9px">Включить</button></div>
-</div>
-<h3 class="h3">Неделя</h3>
-<div class="week"><div id="weekText" class="tip">0 разминок за 7 дней</div><div id="bars" class="bars"></div></div>
-<h3 class="h3">История</h3>
-<div id="hist" class="hist"><div class="empty">Пока нет выполненных разминок.</div></div>
-<div id="ios" class="ios">Для iPhone: открой через Safari -> «Поделиться» -> «На экран Домой». Затем запускай с иконки.</div>
-</aside>
-</div>
-<div id="overlay" class="overlay"><div class="modal"><h2 id="mTitle">Время размяться</h2><p id="mDose"></p><p id="mHint" class="tip"></p><div class="actions"><button id="done" class="b-ok">Сделано</button><button id="snooze" class="b-main">Отложить 5 мин</button><button id="skip" class="b-skip">Пропустить</button></div></div></div>
+
 <script>
-const KEY_SETTINGS="fitpush_settings_v3",KEY_STATS="fitpush_stats_v3",KEY_HISTORY="fitpush_history_v3";
-const IS_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent),IS_STANDALONE=window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;
-const A=[
-{name:"Растяжка шеи и плеч",dose:"45 секунд",hint:"Плавно, без рывков.",minutes:1,intensity:"easy"},
-{name:"Отжимания",dose:"10 повторов",hint:"Корпус ровный, полная амплитуда.",minutes:1,pushups:10,intensity:"normal"},
-{name:"Приседания",dose:"15 повторов",hint:"Пятки прижаты, колени по линии стоп.",minutes:1,intensity:"normal"},
-{name:"Планка",dose:"30 секунд",hint:"Не прогибай поясницу.",minutes:1,intensity:"normal"},
-{name:"Прогулка",dose:"2 минуты",hint:"Встань и пройдись по комнате.",minutes:2,intensity:"easy"},
-{name:"Выпады",dose:"8 на каждую сторону",hint:"Спина прямая, шаг контролируемый.",minutes:1,intensity:"normal"},
-{name:"Прыжки звездочка",dose:"30 повторов",hint:"Ровный ритм, мягкая посадка.",minutes:1,intensity:"intense"},
-{name:"Берпи",dose:"8 повторов",hint:"Сохраняй технику.",minutes:1,intensity:"intense"}
+const KEY="fitpush_glass_v1";
+const IS_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+const IS_STANDALONE=window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;
+
+const EX=[
+  {n:"Отжимания",d:"10 повторов",h:"Ровный корпус, полная амплитуда.",p:10,m:1},
+  {n:"Приседания",d:"15 повторов",h:"Пятки прижаты, колени по линии стоп.",m:1},
+  {n:"Планка",d:"30 секунд",h:"Не прогибай поясницу.",m:1},
+  {n:"Растяжка плеч",d:"45 секунд",h:"Плавно, без рывков.",m:1},
+  {n:"Прогулка",d:"2 минуты",h:"Встань и пройдись по комнате.",m:2},
+  {n:"Выпады",d:"8 на каждую сторону",h:"Контроль баланса и шага.",m:1}
 ];
-const S={intervalMin:60,totalSec:3600,remainSec:3600,running:false,endAt:null,timerId:null,current:null,skipStreak:0,adaptiveShiftMin:0,settings:{mode:"normal",customMin:60,autoStart:true,quietOn:false,quietStart:"22:00",quietEnd:"08:00",sound:"bell"},stats:{streakDays:0,lastActiveDate:"",perDay:{}},history:[]};
-const E={pill:gid("pill"),phase:gid("phase"),clock:gid("clock"),bar:gid("bar"),presets:gid("presets"),modeBadge:gid("modeBadge"),adBadge:gid("adBadge"),act:gid("act"),actTitle:gid("actTitle"),actDose:gid("actDose"),actHint:gid("actHint"),toast:gid("toast"),start:gid("start"),pause:gid("pause"),reset:gid("reset"),now:gid("now"),mode:gid("mode"),custom:gid("custom"),auto:gid("auto"),quiet:gid("quiet"),qStart:gid("qStart"),qEnd:gid("qEnd"),sound:gid("sound"),notif:gid("notif"),sDone:gid("sDone"),sMin:gid("sMin"),sPush:gid("sPush"),sStreak:gid("sStreak"),weekText:gid("weekText"),bars:gid("bars"),hist:gid("hist"),ios:gid("ios"),overlay:gid("overlay"),mTitle:gid("mTitle"),mDose:gid("mDose"),mHint:gid("mHint"),done:gid("done"),snooze:gid("snooze"),skip:gid("skip")};
-function gid(id){return document.getElementById(id)}
+
+const S={min:60,total:3600,left:3600,run:false,end:null,id:null,cur:null,stats:{today:0,push:0,streak:0,last:""}};
+const E={status:g("status"),phase:g("phase"),time:g("time"),next:g("next"),ring:g("ringFg"),start:g("start"),pause:g("pause"),reset:g("reset"),now:g("now"),notif:g("notif"),presets:g("presets"),stToday:g("stToday"),stPush:g("stPush"),stStreak:g("stStreak"),overlay:g("overlay"),mTitle:g("mTitle"),mDose:g("mDose"),mHint:g("mHint"),done:g("done"),snooze:g("snooze"),skip:g("skip"),toast:g("toast")};
+function g(id){return document.getElementById(id)}
+
+const CIRC=2*Math.PI*88;
+E.ring.setAttribute("stroke-dasharray",String(CIRC));
+
 function fmt(s){const m=Math.floor(s/60),x=s%60;return String(m).padStart(2,"0")+":"+String(x).padStart(2,"0")}
 function day(d=new Date()){return d.toISOString().slice(0,10)}
-function timeToMin(v){const p=String(v).split(":").map(Number);return (p[0]||0)*60+(p[1]||0)}
-function inQuiet(now=new Date()){if(!S.settings.quietOn)return false;const t=now.getHours()*60+now.getMinutes(),a=timeToMin(S.settings.quietStart),b=timeToMin(S.settings.quietEnd);if(a===b)return true;if(a<b)return t>=a&&t<b;return t>=a||t<b}
-function save(){localStorage.setItem(KEY_SETTINGS,JSON.stringify(S.settings));localStorage.setItem(KEY_STATS,JSON.stringify(S.stats));localStorage.setItem(KEY_HISTORY,JSON.stringify(S.history.slice(-500)))}
-function load(){try{const a=localStorage.getItem(KEY_SETTINGS),b=localStorage.getItem(KEY_STATS),c=localStorage.getItem(KEY_HISTORY);if(a)S.settings={...S.settings,...JSON.parse(a)};if(b)S.stats={...S.stats,...JSON.parse(b)};if(c)S.history=JSON.parse(c)}catch(_){}}
-function setUiFromSettings(){S.intervalMin=Number(S.settings.customMin)||60;S.totalSec=S.intervalMin*60;S.remainSec=S.totalSec;E.mode.value=S.settings.mode;E.custom.value=String(S.settings.customMin);E.sound.value=S.settings.sound;E.qStart.value=S.settings.quietStart;E.qEnd.value=S.settings.quietEnd;E.auto.classList.toggle("on",S.settings.autoStart);E.quiet.classList.toggle("on",S.settings.quietOn);highlightPreset(S.intervalMin);updateModeBadge();updateAdaptiveBadge();updateNotif();if(IS_IOS&&!IS_STANDALONE)E.ios.classList.add("show")}
-function updateModeBadge(){const m=S.settings.mode==="easy"?"Легкий":S.settings.mode==="intense"?"Интенсивный":"Сбалансированный";E.modeBadge.textContent="Режим: "+m}
-function updateAdaptiveBadge(){E.adBadge.textContent=S.adaptiveShiftMin>0?"Адаптивный таймер: +"+S.adaptiveShiftMin+" мин":"Адаптивный таймер: выкл"}
-function highlightPreset(min){Array.from(E.presets.querySelectorAll("button[data-min]")).forEach(b=>b.classList.toggle("active",Number(b.dataset.min)===min))}
-function setIntervalMin(min,custom){const v=Math.max(5,Math.min(180,Number(min)||60));S.intervalMin=v;S.totalSec=v*60;S.remainSec=S.totalSec;S.endAt=null;S.running=false;if(S.timerId){clearInterval(S.timerId);S.timerId=null}S.settings.customMin=v;if(custom)highlightPreset(-1);else highlightPreset(v);E.custom.value=String(v);E.phase.textContent="До следующей разминки";renderTimer();save()}
-function renderTimer(){E.clock.textContent=fmt(S.remainSec);E.bar.style.width=(Math.max(0,Math.min(1,1-S.remainSec/S.totalSec))*100).toFixed(2)+"%";if(S.running){E.pill.textContent="В работе";E.pill.className="pill run"}else if(S.remainSec!==S.totalSec){E.pill.textContent="Пауза";E.pill.className="pill pause"}else{E.pill.textContent="Ожидание";E.pill.className="pill"}E.clock.style.color=S.remainSec<=60?"var(--danger)":S.remainSec<=300?"var(--warn)":"var(--ink)";document.title=(S.running?fmt(S.remainSec)+" - ":"")+"FitPush"}
-function startTimer(){if(S.running)return;S.running=true;S.endAt=Date.now()+S.remainSec*1000;E.phase.textContent="До следующей разминки";S.timerId=setInterval(()=>{S.remainSec=Math.max(0,Math.round((S.endAt-Date.now())/1000));renderTimer();if(S.remainSec<=0){clearInterval(S.timerId);S.timerId=null;S.running=false;trigger("timer")}},250);renderTimer()}
-function pauseTimer(){if(!S.running)return;S.running=false;if(S.timerId){clearInterval(S.timerId);S.timerId=null}renderTimer()}
-function resetTimer(){pauseTimer();S.remainSec=S.totalSec;S.endAt=null;E.phase.textContent="До следующей разминки";renderTimer()}
-function pick(){let p=A;if(S.settings.mode==="easy")p=A.filter(x=>x.intensity!=="intense");if(S.settings.mode==="intense")p=A.filter(x=>x.intensity!=="easy");return p[Math.floor(Math.random()*p.length)]}
-function toast(msg){E.toast.textContent=msg;E.toast.classList.add("show");setTimeout(()=>E.toast.classList.remove("show"),3400)}
-function showAct(a){E.act.classList.add("show");E.actTitle.textContent=a.name;E.actDose.textContent="Цель: "+a.dose;E.actHint.textContent=a.hint;E.mTitle.textContent=a.name;E.mDose.textContent="Цель: "+a.dose;E.mHint.textContent=a.hint;E.overlay.classList.add("show");E.phase.textContent="Сделай разминку сейчас"}
-function hideOverlay(){E.overlay.classList.remove("show")}
-function trigger(reason){if(inQuiet()){toast("Сейчас тихие часы. Напоминание отложено.");S.remainSec=15*60;S.totalSec=Math.max(S.totalSec,S.remainSec);renderTimer();startTimer();return}S.current=pick();showAct(S.current);playSound(S.settings.sound);vib();push(S.current.name+" - "+S.current.dose);if(reason==="timer"&&S.adaptiveShiftMin>0){S.adaptiveShiftMin=0;updateAdaptiveBadge()}}
-function todayRec(){const d=day();return S.stats.perDay[d]||{done:0,minutes:0,pushups:0}}
-function ensureRec(d){if(!S.stats.perDay[d])S.stats.perDay[d]={done:0,minutes:0,pushups:0};return S.stats.perDay[d]}
-function doneAct(){if(!S.current)return;const now=new Date(),d=day(now),r=ensureRec(d);r.done+=1;r.minutes+=S.current.minutes||1;r.pushups+=S.current.pushups||0;if(S.stats.lastActiveDate!==d){if(!S.stats.lastActiveDate)S.stats.streakDays=1;else{const prev=new Date(S.stats.lastActiveDate+"T00:00:00"),diff=Math.round((new Date(d+"T00:00:00")-prev)/(24*60*60*1000));if(diff===1)S.stats.streakDays+=1;if(diff>1)S.stats.streakDays=1}S.stats.lastActiveDate=d}S.history.push({day:d,time:now.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"}),name:S.current.name,dose:S.current.dose});if(r.done%3===0)toast("Время выпить воды.");S.current=null;S.skipStreak=0;hideOverlay();save();renderStats();renderWeek();renderHist();resetTimer();if(S.settings.autoStart)startTimer()}
-function skipAct(){S.current=null;hideOverlay();S.skipStreak+=1;if(S.skipStreak>=2){S.adaptiveShiftMin=10;const v=Math.min(180,S.settings.customMin+S.adaptiveShiftMin);S.intervalMin=v;S.totalSec=v*60;S.remainSec=S.totalSec;updateAdaptiveBadge();toast("Добавлен +10 минут адаптивный буфер.")}else resetTimer();renderTimer();if(S.settings.autoStart)startTimer()}
-function snoozeAct(){S.current=null;hideOverlay();S.remainSec=5*60;S.totalSec=Math.max(S.totalSec,S.remainSec);E.phase.textContent="Напоминание отложено на 5 минут";renderTimer();startTimer()}
-function renderStats(){const t=todayRec();E.sDone.textContent=String(t.done||0);E.sMin.textContent=String(t.minutes||0);E.sPush.textContent=String(t.pushups||0);E.sStreak.textContent=String(S.stats.streakDays||0)}
-function weekDays(){const out=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);out.push(day(d))}return out}
-function renderWeek(){const d=weekDays(),vals=d.map(x=>S.stats.perDay[x]?S.stats.perDay[x].done:0),max=Math.max(1,...vals),sum=vals.reduce((a,b)=>a+b,0);E.weekText.textContent=sum+" разминок за 7 дней";E.bars.innerHTML=vals.map((v,i)=>{const h=Math.max(6,Math.round(v/max*78)),idx=new Date(d[i]+"T00:00:00").getDay(),lbl=["Пн","Вт","Ср","Чт","Пт","Сб","Вс"][idx===0?6:idx-1];return "<div class=\"bar\" style=\"height:"+h+"px\" title=\""+lbl+": "+v+"\"><small>"+lbl+"</small></div>"}).join("")}
-function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&#39;")}
-function renderHist(){const d=day(),list=S.history.filter(x=>x.day===d).slice().reverse();if(!list.length){E.hist.innerHTML="<div class=\"empty\">Пока нет выполненных разминок.</div>";return}E.hist.innerHTML=list.map(e=>"<div class=\"entry\"><div><strong>"+esc(e.name)+"</strong><div class=\"meta\">"+esc(e.dose)+"</div></div><div class=\"meta\">"+esc(e.time)+"</div></div>").join("")}
-function vib(){try{if("vibrate" in navigator)navigator.vibrate([150,80,150])}catch(_){}}
-function beep(ctx,t,f,d,w,g){const o=ctx.createOscillator(),k=ctx.createGain();o.type=w;o.frequency.value=f;o.connect(k);k.connect(ctx.destination);k.gain.setValueAtTime(g,t);k.gain.exponentialRampToValueAtTime(.001,t+d);o.start(t);o.stop(t+d)}
-function playSound(type){try{const c=new(window.AudioContext||window.webkitAudioContext)(),t=c.currentTime;if(type==="soft"){beep(c,t,650,.16,"sine",.12);beep(c,t+.18,760,.14,"sine",.1)}else if(type==="pulse"){[0,.12,.24,.36].forEach((d,i)=>beep(c,t+d,320+i*45,.1,"square",.08))}else{beep(c,t,523,.2,"triangle",.13);beep(c,t+.24,659,.2,"triangle",.12)}}catch(_){}}
-function askNotif(){if(!("Notification" in window))return;if(IS_IOS&&!IS_STANDALONE){alert("На iPhone сначала добавь приложение на экран Домой.");return}if(Notification.permission==="default")Notification.requestPermission().finally(updateNotif);else updateNotif()}
-function updateNotif(){if(!("Notification" in window)){E.notif.textContent="Не поддерживается";E.notif.disabled=true;return}if(IS_IOS&&!IS_STANDALONE){E.notif.textContent="Через Домой";return}if(Notification.permission==="granted")E.notif.textContent="Включено";else if(Notification.permission==="denied")E.notif.textContent="Заблокировано";else E.notif.textContent="Включить"}
-function push(body){if("Notification" in window&&Notification.permission==="granted")new Notification("FitPush напоминание",{body,tag:"fitpush"})}
-function unlockAudio(){const f=()=>{try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=new C();if(c.state==="suspended")c.resume();const o=c.createOscillator(),g=c.createGain();g.gain.value=.0001;o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.01);setTimeout(()=>c.close(),80)}catch(_){}document.removeEventListener("touchstart",f);document.removeEventListener("click",f)};document.addEventListener("touchstart",f,{once:true});document.addEventListener("click",f,{once:true})}
-function setupPWA(){if(!("serviceWorker" in navigator))return;const ok=location.protocol==="https:"||location.hostname==="localhost"||location.hostname==="127.0.0.1";if(ok)navigator.serviceWorker.register("./sw.js").catch(()=>{})}
-E.presets.addEventListener("click",e=>{const b=e.target.closest("button[data-min]");if(!b)return;setIntervalMin(Number(b.dataset.min),false)});
-E.start.addEventListener("click",startTimer);E.pause.addEventListener("click",pauseTimer);E.reset.addEventListener("click",resetTimer);E.now.addEventListener("click",()=>trigger("manual"));
-E.done.addEventListener("click",doneAct);E.skip.addEventListener("click",skipAct);E.snooze.addEventListener("click",snoozeAct);
-E.mode.addEventListener("change",()=>{S.settings.mode=E.mode.value;updateModeBadge();save()});E.custom.addEventListener("change",()=>setIntervalMin(Number(E.custom.value),true));
-E.auto.addEventListener("click",()=>{S.settings.autoStart=!S.settings.autoStart;E.auto.classList.toggle("on",S.settings.autoStart);save()});
-E.quiet.addEventListener("click",()=>{S.settings.quietOn=!S.settings.quietOn;E.quiet.classList.toggle("on",S.settings.quietOn);save()});
-E.qStart.addEventListener("change",()=>{S.settings.quietStart=E.qStart.value||"22:00";save()});E.qEnd.addEventListener("change",()=>{S.settings.quietEnd=E.qEnd.value||"08:00";save()});E.sound.addEventListener("change",()=>{S.settings.sound=E.sound.value;save()});E.notif.addEventListener("click",askNotif);
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&S.running&&S.endAt){S.remainSec=Math.max(0,Math.round((S.endAt-Date.now())/1000));if(S.remainSec<=0){if(S.timerId){clearInterval(S.timerId);S.timerId=null}S.running=false;trigger("timer")}renderTimer()}});
-document.addEventListener("keydown",e=>{const k=e.key.toLowerCase(),t=(e.target&&e.target.tagName||"").toLowerCase();if(["input","textarea","select"].includes(t))return;if(k==="s"){if(S.running)pauseTimer();else startTimer()}if(k==="r")resetTimer();if(k==="n")trigger("manual");if(k==="escape")hideOverlay()});
-load();setUiFromSettings();renderTimer();renderStats();renderWeek();renderHist();unlockAudio();setupPWA();
+function save(){localStorage.setItem(KEY,JSON.stringify(S.stats))}
+function load(){try{const x=localStorage.getItem(KEY);if(x)S.stats={...S.stats,...JSON.parse(x)}}catch(_){} const t=day();if(S.stats.last&&S.stats.last!==t){const y=new Date();y.setDate(y.getDate()-1);S.stats.streak=S.stats.last===day(y)?S.stats.streak+1:0;S.stats.today=0;S.stats.push=0;}S.stats.last=t;save()}
+
+function render(){
+  E.time.textContent=fmt(S.left);
+  const r=Math.max(0,Math.min(1,1-S.left/S.total));
+  E.ring.style.strokeDashoffset=String(CIRC*(1-r));
+  if(S.run){E.status.textContent="В работе";E.status.className="status";}
+  else if(S.left!==S.total){E.status.textContent="Пауза";E.status.className="status";}
+  else {E.status.textContent="Ожидание";E.status.className="status";}
+  E.time.style.color=S.left<=60?"var(--danger)":S.left<=300?"var(--warn)":"var(--text)";
+  E.stToday.textContent=String(S.stats.today||0);
+  E.stPush.textContent=String(S.stats.push||0);
+  E.stStreak.textContent=String(S.stats.streak||0);
+  document.title=(S.run?fmt(S.left)+" - ":"")+"FitPush";
+}
+
+function pick(min){
+  S.min=min;S.total=min*60;S.left=S.total;S.end=null;
+  if(S.id){clearInterval(S.id);S.id=null}
+  S.run=false;
+  Array.from(E.presets.querySelectorAll("button")).forEach(b=>b.classList.toggle("active",Number(b.dataset.min)===min));
+  E.phase.textContent="До разминки";
+  E.next.textContent="Интервал: "+min+" минут";
+  render();
+}
+
+function start(){
+  if(S.run)return;
+  S.run=true;
+  S.end=Date.now()+S.left*1000;
+  E.phase.textContent="До разминки";
+  S.id=setInterval(()=>{
+    S.left=Math.max(0,Math.round((S.end-Date.now())/1000));
+    render();
+    if(S.left<=0){clearInterval(S.id);S.id=null;S.run=false;fire("timer")}
+  },250);
+  render();
+}
+
+function pause(){if(!S.run)return;S.run=false;if(S.id){clearInterval(S.id);S.id=null}render()}
+function reset(){pause();S.left=S.total;E.phase.textContent="До разминки";E.next.textContent="Интервал: "+S.min+" минут";render()}
+function toast(t){E.toast.textContent=t;E.toast.classList.add("show");setTimeout(()=>E.toast.classList.remove("show"),2600)}
+
+function fire(src){
+  S.cur=EX[Math.floor(Math.random()*EX.length)];
+  E.mTitle.textContent=S.cur.n;
+  E.mDose.textContent="Цель: "+S.cur.d;
+  E.mHint.textContent=S.cur.h;
+  E.next.textContent="Сейчас: "+S.cur.n;
+  E.phase.textContent="Разминка";
+  E.overlay.classList.add("show");
+  sound();vib();notify(S.cur.n+" - "+S.cur.d);
+}
+
+function done(){
+  if(!S.cur)return;
+  S.stats.today+=1;
+  if(S.cur.p)S.stats.push+=(S.cur.p||0);
+  S.stats.last=day();
+  save();
+  S.cur=null;
+  E.overlay.classList.remove("show");
+  reset();start();
+}
+
+function skip(){S.cur=null;E.overlay.classList.remove("show");reset();start()}
+function snooze(){S.cur=null;E.overlay.classList.remove("show");S.left=300;S.total=Math.max(S.total,300);E.phase.textContent="Отложено";E.next.textContent="Напоминание через 5 минут";start()}
+
+function sound(){
+  try{
+    const c=new(window.AudioContext||window.webkitAudioContext)(),t=c.currentTime;
+    [[523,.16],[659,.16]].forEach((z,i)=>{const o=c.createOscillator(),g=c.createGain();o.type="triangle";o.frequency.value=z[0];o.connect(g);g.connect(c.destination);g.gain.setValueAtTime(.12,t+i*.18);g.gain.exponentialRampToValueAtTime(.001,t+i*.18+z[1]);o.start(t+i*.18);o.stop(t+i*.18+z[1]);});
+  }catch(_){ }
+}
+function vib(){try{if("vibrate" in navigator)navigator.vibrate([140,80,140])}catch(_){}}
+function askNotif(){if(!("Notification" in window))return;if(IS_IOS&&!IS_STANDALONE){alert("На iPhone сначала добавь приложение на экран Домой.");return}if(Notification.permission==="default")Notification.requestPermission().finally(updNotif);else updNotif()}
+function updNotif(){if(!("Notification" in window)){E.notif.textContent="Нет API";E.notif.disabled=true;return}if(IS_IOS&&!IS_STANDALONE){E.notif.textContent="Через Домой";return}if(Notification.permission==="granted")E.notif.textContent="Включено";else if(Notification.permission==="denied")E.notif.textContent="Блок";else E.notif.textContent="Уведомления"}
+function notify(body){if("Notification" in window&&Notification.permission==="granted")new Notification("FitPush",{body,tag:"fitpush"})}
+
+function pwa(){if(!("serviceWorker" in navigator))return;const ok=location.protocol==="https:"||location.hostname==="localhost"||location.hostname==="127.0.0.1";if(ok)navigator.serviceWorker.register("./sw.js").catch(()=>{})}
+
+E.presets.addEventListener("click",e=>{const b=e.target.closest("button[data-min]");if(!b)return;pick(Number(b.dataset.min))});
+E.start.addEventListener("click",start);
+E.pause.addEventListener("click",pause);
+E.reset.addEventListener("click",reset);
+E.now.addEventListener("click",()=>fire("manual"));
+E.notif.addEventListener("click",askNotif);
+E.done.addEventListener("click",done);
+E.skip.addEventListener("click",skip);
+E.snooze.addEventListener("click",snooze);
+
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"&&S.run&&S.end){S.left=Math.max(0,Math.round((S.end-Date.now())/1000));if(S.left<=0){if(S.id){clearInterval(S.id);S.id=null}S.run=false;fire("timer")}render()}});
+document.addEventListener("keydown",e=>{const k=e.key.toLowerCase();if(k==="s"){if(S.run)pause();else start()}if(k==="r")reset();if(k==="n")fire("manual");if(k==="escape")E.overlay.classList.remove("show")});
+
+load();pick(60);updNotif();render();pwa();
 </script>
 </body>
 </html>

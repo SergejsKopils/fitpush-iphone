@@ -1,4 +1,4 @@
-const CACHE = "fitpush-v1";
+const CACHE = "fitpush-v2";
 const ASSETS = [
   "./",
   "./FitPush.html",
