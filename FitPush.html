@@ -8,397 +8,589 @@
 <meta name="apple-mobile-web-app-title" content="FitPush" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="format-detection" content="telephone=no" />
-<meta name="theme-color" content="#05070c" />
+<meta name="theme-color" content="#000000" />
 <link rel="manifest" href="manifest.webmanifest" />
 <title>FitPush</title>
 
 <style>
 :root{
-  --bg:#05070c;
-  --line:rgba(255,255,255,.14);
-  --line2:rgba(255,255,255,.09);
-  --text:#f5f7fb;
-  --muted:#9aa6bb;
-  --warn:#fdba74;
-  --danger:#fca5a5;
+  /* base */
+  --bg:#000;
+  --text:#ffffff;
+  --muted:rgba(255,255,255,.55);
+  --muted2:rgba(255,255,255,.28);
+  --line:rgba(255,255,255,.10);
 
-  /* user-tunable */
-  --clock-scale: 1.0;      /* 0.8 .. 1.25 */
-  --clock-bright: 1.0;     /* 0.5 .. 1.4 */
-  --clock-glow: 1.0;       /* 0.0 .. 1.6 */
-  --clock-vignette: .55;   /* 0 .. .75 */
+  /* user settings (stored) */
+  --clock-scale: 1.00;   /* 0.80..1.25 */
+  --clock-bright: 1.00;  /* 0.50..1.40 */
+  --clock-glow: 0.90;    /* 0.00..1.60 */
 }
 
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
   margin:0;
+  background:var(--bg);
   color:var(--text);
-  font-family:"Segoe UI",Tahoma,sans-serif;
-  background:
-    radial-gradient(circle at 50% -12%, rgba(90,160,255,.18) 0%, transparent 46%),
-    radial-gradient(circle at 12% 92%, rgba(60,120,160,.16) 0%, transparent 44%),
-    #05070c;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Segoe UI", Tahoma, sans-serif;
   overflow:hidden;
 }
 
-/* subtle overlays */
-body::before{
-  content:"";
-  position:fixed; inset:0;
-  background:
-    radial-gradient(circle at 30% 30%, rgba(255,255,255,.05) 0%, transparent 55%),
-    linear-gradient(135deg, rgba(255,255,255,.02), transparent 44%);
-  pointer-events:none;
-}
-body::after{
-  content:"";
-  position:fixed; inset:-40%;
-  opacity:.08;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
-  transform:rotate(10deg);
-  pointer-events:none;
-}
-
-.app{height:100%}
-
-/* ===== Screens routing ===== */
-.screen{display:none; height:100%}
-.screen.active{display:grid}
-
-/* ===== CLOCK SCREEN ===== */
-.screen-clock{
-  grid-template-rows:auto 1fr auto;
+/* The 2-screen slider */
+.viewport{
+  position:fixed;
+  inset:0;
+  overflow:hidden;
   background:#000;
-  padding:calc(8px + env(safe-area-inset-top)) 14px calc(10px + env(safe-area-inset-bottom));
 }
 
-.clock-shell{
-  position:relative; width:100%; height:100%;
-  outline:none; cursor:pointer; user-select:none;
+.track{
+  position:absolute;
+  inset:0;
+  display:flex;
+  width:200%;
+  height:100%;
+  transform:translateX(0%);
+  transition:transform 280ms ease;
+  will-change:transform;
 }
 
-/* full-screen dial option */
-body.fullscreen-dial .clock-shell{
-  width: 100vw;
-  height: 100vh;
-  max-height:none;
-  border-radius:0;
-  border-color: transparent;
-  box-shadow:none;
+/* screens */
+.screen{
+  width:100%;
+  height:100%;
+  flex:0 0 100%;
+  position:relative;
 }
 
-.ios-status{
-  display:flex; justify-content:space-between; align-items:center;
-  padding:2px 2px 0; color:#f5f7fb; font-size:1.05rem; font-weight:700; letter-spacing:.01em;
-}
-.ios-icons{display:flex; gap:8px; align-items:center}
-.sig{display:flex; gap:2px; align-items:flex-end}
-.sig i{display:block; width:3px; border-radius:2px; background:#fff; opacity:.9}
-.sig i:nth-child(1){height:4px}
-.sig i:nth-child(2){height:6px}
-.sig i:nth-child(3){height:8px}
-.sig i:nth-child(4){height:10px}
-.wifi{
-  width:14px;height:10px;position:relative;display:block;
-}
-.wifi::before,.wifi::after{
-  content:"";position:absolute;left:50%;transform:translateX(-50%);
-  border:2px solid #fff;border-top-color:#fff;border-right-color:transparent;border-bottom-color:transparent;border-left-color:transparent;border-radius:50%;
-}
-.wifi::before{width:14px;height:14px;top:-7px}
-.wifi::after{width:8px;height:8px;top:-4px}
-.battery{
-  width:26px;height:12px;border:2px solid #fff;border-radius:4px;position:relative;
-}
-.battery::before{
-  content:"";position:absolute;right:-4px;top:2px;width:2px;height:6px;background:#fff;border-radius:1px;
-}
-.battery::after{
-  content:"";position:absolute;left:2px;top:2px;width:16px;height:6px;background:#fff;border-radius:2px;
+/* =========================
+   SCREEN 1: CLOCK (pure black)
+   ========================= */
+.clock{
+  background:#000;
 }
 
-.clock-content{
-  position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
-  text-align:center;
-  padding:24px 16px 52px;
-  transform:scale(var(--clock-scale));
-  filter:brightness(var(--clock-bright));
+/* subtle vignette + very soft texture (like your reference black poster) */
+.clock::before{
+  content:"";
+  position:absolute; inset:-30%;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(255,255,255,.05) 0%, rgba(0,0,0,0) 34%),
+    radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,.95) 62%),
+    linear-gradient(180deg, rgba(255,255,255,.02), transparent 40%, rgba(255,255,255,.01));
+  opacity:.85;
+  pointer-events:none;
 }
 
-.brand-mark{
-  font-size:clamp(3.6rem,18vw,8.8rem); font-weight:900; line-height:.84; letter-spacing:.01em;
-  text-transform:uppercase; color:#f1f3f6;
-  transform:skewY(-8deg);
-  margin-top:-4vh;
+/* optional ultra subtle noise */
+.clock::after{
+  content:"";
+  position:absolute; inset:-40%;
+  opacity:.06;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+  transform:rotate(12deg);
+  pointer-events:none;
 }
-.brand-mark span{display:block}
+
+.clock-center{
+  position:absolute; inset:0;
+  display:grid;
+  place-items:center;
+  padding:24px;
+}
 
 .clock-time{
-  margin-top:26px;
+  transform:scale(var(--clock-scale));
+  filter:brightness(var(--clock-bright));
+  transform-origin:center;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: clamp(2.1rem, 7vw, 3.5rem);
-  letter-spacing:.18em; font-variant-numeric:tabular-nums; color:#f7fbff;
-  text-shadow:0 0 calc(16px * var(--clock-glow)) rgba(255,255,255,.16);
+  font-variant-numeric: tabular-nums;
+  letter-spacing:.10em;
+  line-height:1;
+  text-align:center;
+  font-size: clamp(5rem, 20vw, 10.5rem);
+  color:#fff;
+  text-shadow:
+    0 0 calc(18px * var(--clock-glow)) rgba(255,255,255,.18),
+    0 0 calc(60px * var(--clock-glow)) rgba(255,255,255,.08);
 }
 
-/* seconds smaller */
+/* seconds smaller (optional) */
 .clock-time .sec{
-  font-size: .45em;
+  font-size:.42em;
   opacity:.92;
-  letter-spacing:.12em;
+  letter-spacing:.14em;
 }
 
-.clock-hint{
+/* minimal page indicator (two dots) */
+.dots{
   position:absolute;
-  bottom:58px;
   left:50%;
+  bottom:16px;
   transform:translateX(-50%);
-  font-size:.78rem;
-  color:rgba(200,210,230,.38);
-  letter-spacing:.06em;
+  display:flex;
+  gap:10px;
+  opacity:.28;
+  user-select:none;
 }
-.clock-hint b{color:rgba(230,240,255,.55); font-weight:600}
-.home-indicator{
-  position:absolute;left:50%;bottom:8px;transform:translateX(-50%);
-  width:min(36vw,140px);height:5px;border-radius:999px;background:rgba(230,235,245,.55);
+.dot{
+  width:6px; height:6px;
+  border-radius:999px;
+  background:#fff;
+  opacity:.35;
+}
+.dot.active{opacity:.95}
+
+/* edge swipe hint zone (invisible) */
+.edge{
+  position:absolute;
+  top:0; bottom:0;
+  width:18px;
+}
+.edge.right{right:0}
+.edge.left{left:0}
+
+/* =========================
+   SCREEN 2: SETTINGS (user-friendly)
+   ========================= */
+.settings{
+  background:
+    radial-gradient(circle at 50% -10%, rgba(255,255,255,.06), transparent 48%),
+    radial-gradient(circle at 10% 90%, rgba(255,255,255,.04), transparent 40%),
+    #000;
+  padding:calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
+  overflow:auto;
 }
 
-.clock-shell:active{transform:translateY(1px) scale(var(--clock-scale))}
-
-/* ===== SETTINGS SCREEN ===== */
-.screen-settings{
-  grid-template-rows:auto 1fr auto;
-  gap:14px;
-  padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
-  max-width:980px;
-  margin:0 auto;
-}
-
-.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.brand{font-size:.95rem;letter-spacing:.16em;text-transform:uppercase;color:#dbe6ff}
-.status{font-size:.72rem;color:var(--muted);border:1px solid var(--line2);border-radius:999px;padding:6px 10px;background:rgba(255,255,255,.03);backdrop-filter:blur(10px)}
-
-.stage{display:flex;align-items:center;justify-content:center;min-height:0}
-.dial-wrap{position:relative;width:min(76vw,560px);aspect-ratio:1/1;display:grid;place-items:center}
-.dial-glow{position:absolute;inset:9%;border-radius:50%;filter:blur(28px);background:radial-gradient(circle,rgba(170,220,255,.14) 0%,transparent 70%)}
-.dial{position:relative;width:100%;height:100%;border-radius:50%;border:1px solid var(--line);
-  background:linear-gradient(165deg,rgba(255,255,255,.12),rgba(255,255,255,.03) 50%,rgba(0,0,0,.18)),
-  radial-gradient(circle at 30% 25%,rgba(255,255,255,.10),transparent 56%);
-  backdrop-filter:blur(16px) saturate(125%);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),0 40px 90px rgba(0,0,0,.50)
-}
-.ring{position:absolute;inset:6.5%;transform:rotate(-90deg)}
-.ring-bg{fill:none;stroke:rgba(255,255,255,.08);stroke-width:8}
-.ring-fg{fill:none;stroke:rgba(190,225,255,.88);stroke-width:8;stroke-linecap:round;filter:drop-shadow(0 0 10px rgba(170,220,255,.22));transition:stroke-dashoffset .22s linear}
-.tick{position:absolute;inset:10%;border-radius:50%;
-  background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.18) 0deg 1deg,transparent 1deg 8deg);
-  mask:radial-gradient(circle,transparent 74%,#000 75%);
-  opacity:.55
-}
-.core{position:absolute;inset:21%;border-radius:50%;border:1px solid rgba(255,255,255,.13);
-  background:radial-gradient(circle at 40% 20%,rgba(255,255,255,.16),rgba(255,255,255,.03) 45%,rgba(0,0,0,.20));
-  backdrop-filter:blur(12px) saturate(120%);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:14px;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)
-}
-.phase{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
-.timeMirror{margin:10px 0 6px;font-size:clamp(2.8rem,10vw,5.8rem);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:.05em;color:var(--text)}
-.next{font-size:.78rem;color:#c7d6ea;min-height:18px;opacity:.92}
-
-.bottom{display:grid;gap:10px}
-.controls,.presets,.meta,.prefs{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;user-select:none}
-
-button{
-  font:inherit;
-  border:1px solid var(--line2);
-  background:rgba(255,255,255,.05);
-  color:var(--text);
-  padding:10px 14px;
-  border-radius:14px;
-  cursor:pointer;
-  backdrop-filter:blur(10px)
-}
-button:active{transform:translateY(1px)}
-.btn-main{background:linear-gradient(135deg,rgba(190,225,255,.22),rgba(255,255,255,.05));border-color:rgba(190,225,255,.35)}
-.presets button{font-size:.86rem;padding:8px 11px;color:#d8e5f7}
-.presets button.active{background:rgba(190,225,255,.16);border-color:rgba(190,225,255,.38)}
-.meta{color:var(--muted);font-size:.78rem}
-.chip{border:1px solid var(--line2);padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.035);backdrop-filter:blur(10px)}
-
-/* Preferences panel */
-.prefs{
-  margin-top:6px;
-  padding:10px 10px;
-  border:1px solid rgba(255,255,255,.08);
-  background:rgba(255,255,255,.03);
-  border-radius:16px;
+.header{
+  position:sticky;
+  top:0;
+  z-index:5;
+  padding:10px 0 12px;
+  background:linear-gradient(180deg, rgba(0,0,0,.92), rgba(0,0,0,.70) 60%, transparent);
   backdrop-filter: blur(10px);
 }
-.pref{
+
+.header-row{
   display:flex;
   align-items:center;
-  gap:8px;
-  padding:6px 10px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.06);
-  background:rgba(0,0,0,.08);
+  justify-content:space-between;
+  gap:10px;
 }
-.pref label{
-  font-size:.82rem;
-  color:rgba(210,225,245,.85);
-  letter-spacing:.02em;
+.title{
+  font-size:1.05rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  opacity:.92;
 }
-.pref input[type="range"]{
-  width:140px;
-}
-.pref input[type="checkbox"]{
-  transform:scale(1.1);
-}
-.small{
-  font-size:.75rem;
-  color:rgba(190,205,230,.70);
+.badge{
+  font-size:.78rem;
+  padding:7px 10px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  color:var(--muted);
+  background:rgba(255,255,255,.03);
 }
 
-/* Overlay modal */
-.overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(2,6,14,.72);backdrop-filter:blur(10px)}
+.cards{
+  display:grid;
+  gap:12px;
+  max-width:820px;
+  margin:0 auto;
+  padding-bottom:24px;
+}
+
+.card{
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:rgba(255,255,255,.03);
+  backdrop-filter: blur(10px);
+  padding:14px;
+}
+.card h3{
+  margin:0 0 10px;
+  font-size:.95rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.86);
+}
+.row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 0;
+  border-top:1px solid rgba(255,255,255,.06);
+}
+.row:first-of-type{border-top:0}
+.row .label{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  min-width:0;
+}
+.row .label .main{
+  font-size:.95rem;
+  color:rgba(255,255,255,.92);
+}
+.row .label .sub{
+  font-size:.80rem;
+  color:var(--muted);
+  line-height:1.25;
+}
+.controls{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+/* switches */
+.switch{
+  position:relative;
+  width:46px;
+  height:28px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.06);
+  cursor:pointer;
+  flex:0 0 auto;
+}
+.switch input{display:none}
+.switch .knob{
+  position:absolute;
+  top:2px; left:2px;
+  width:24px; height:24px;
+  border-radius:999px;
+  background:#fff;
+  opacity:.86;
+  transition:transform 160ms ease, opacity 160ms ease;
+}
+.switch input:checked + .knob{
+  transform:translateX(18px);
+  opacity:1;
+}
+.switch.on{
+  border-color:rgba(255,255,255,.20);
+  background:rgba(255,255,255,.10);
+}
+
+/* sliders */
+.range{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-width:260px;
+}
+input[type="range"]{
+  width:220px;
+  accent-color:#fff;
+}
+.val{
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  color:rgba(255,255,255,.72);
+  font-size:.86rem;
+  width:46px;
+  text-align:right;
+}
+
+/* buttons */
+.btn{
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  padding:10px 12px;
+  border-radius:14px;
+  cursor:pointer;
+}
+.btn:active{transform:translateY(1px)}
+.btn.primary{
+  background:rgba(255,255,255,.12);
+  border-color:rgba(255,255,255,.22);
+}
+.btn.danger{
+  background:rgba(255,255,255,.04);
+  border-color:rgba(255,255,255,.10);
+  color:rgba(255,255,255,.80);
+}
+
+/* mini grid buttons for presets */
+.preset-grid{
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0,1fr));
+  gap:8px;
+}
+.preset{
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.05);
+  color:rgba(255,255,255,.9);
+  padding:10px 10px;
+  border-radius:14px;
+  cursor:pointer;
+  text-align:center;
+  font-variant-numeric: tabular-nums;
+}
+.preset.active{
+  background:rgba(255,255,255,.12);
+  border-color:rgba(255,255,255,.22);
+}
+
+/* overlay (reminder) */
+.overlay{
+  position:fixed; inset:0;
+  display:none;
+  align-items:center; justify-content:center;
+  padding:16px;
+  background:rgba(0,0,0,.78);
+  backdrop-filter: blur(10px);
+  z-index:20;
+}
 .overlay.show{display:flex}
-.modal{width:min(460px,100%);border:1px solid var(--line);border-radius:18px;background:linear-gradient(165deg,rgba(255,255,255,.14),rgba(255,255,255,.05));backdrop-filter:blur(14px);padding:16px}
+.modal{
+  width:min(520px, 100%);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:18px;
+  background:rgba(255,255,255,.05);
+  backdrop-filter: blur(14px);
+  padding:16px;
+}
 .modal h2{margin:0 0 8px;font-size:1.25rem}
-.modal p{margin:4px 0;color:#d8e5f7}
-.modal .hint{font-size:.9rem;color:var(--muted)}
+.modal p{margin:4px 0;color:rgba(255,255,255,.86)}
+.modal .hint{font-size:.92rem;color:var(--muted)}
 .modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 
-/* Toast */
-.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);padding:10px 12px;border-radius:999px;border:1px solid #2b3a4a;background:rgba(8,16,28,.86);color:#d8e5f7;font-size:.82rem;display:none}
+.toast{
+  position:fixed;
+  left:50%;
+  bottom:18px;
+  transform:translateX(-50%);
+  padding:10px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.75);
+  color:rgba(255,255,255,.90);
+  font-size:.84rem;
+  display:none;
+  z-index:30;
+}
 .toast.show{display:block}
 
-@media (max-width:640px){
-  .screen-settings{padding:calc(12px + env(safe-area-inset-top)) 10px calc(12px + env(safe-area-inset-bottom))}
-  .dial-wrap{width:min(92vw,430px)}
-  .core{inset:22%}
-  .timeMirror{font-size:clamp(2.4rem,14vw,4.6rem)}
-  .clock-shell{height:min(50vw,280px); border-radius:38px}
-  .pref input[type="range"]{width:110px}
+@media (max-width:520px){
+  .range{min-width:0}
+  input[type="range"]{width:170px}
+  .preset-grid{grid-template-columns:repeat(2, minmax(0,1fr))}
 }
 </style>
 </head>
 
 <body>
-<div class="app">
+<div class="viewport" id="viewport">
+  <div class="track" id="track">
 
-  <!-- SCREEN 1: CLOCK -->
-  <section id="screenClock" class="screen screen-clock active" aria-label="Clock screen">
-    <div class="ios-status">
-      <div id="statusClock">9:41</div>
-      <div class="ios-icons" aria-hidden="true">
-        <span class="sig"><i></i><i></i><i></i><i></i></span>
-        <span class="wifi"></span>
-        <span class="battery"></span>
+    <!-- SCREEN 1: CLOCK -->
+    <section class="screen clock" aria-label="Clock">
+      <div class="clock-center">
+        <div id="clockTime" class="clock-time">60:00</div>
       </div>
-    </div>
-    <div class="clock-shell" id="openSettings" tabindex="0" role="button" aria-label="Open settings">
-      <div class="clock-content">
-        <div class="brand-mark" aria-hidden="true"><span>FIT</span><span>PUSH</span></div>
-        <div id="time" class="clock-time">60:00</div>
-        <div class="clock-hint">press <b>Space</b> for settings</div>
+
+      <!-- minimalist page dots -->
+      <div class="dots" aria-hidden="true">
+        <div class="dot active" id="dot0"></div>
+        <div class="dot" id="dot1"></div>
       </div>
-      <div class="home-indicator" aria-hidden="true"></div>
-    </div>
-  </section>
 
-  <!-- SCREEN 2: SETTINGS -->
-  <section id="screenSettings" class="screen screen-settings" aria-label="Settings screen">
+      <!-- invisible edge zones to make swipe easier -->
+      <div class="edge left" aria-hidden="true"></div>
+      <div class="edge right" aria-hidden="true"></div>
+    </section>
 
-    <div class="top">
-      <div class="brand">FitPush</div>
-      <div id="status" class="status">Ожидание</div>
-    </div>
+    <!-- SCREEN 2: SETTINGS -->
+    <section class="screen settings" aria-label="Settings">
+      <div class="header">
+        <div class="header-row">
+          <div class="title">Settings</div>
+          <div class="badge" id="statusBadge">Ожидание</div>
+        </div>
+      </div>
 
-    <div class="stage">
-      <div class="dial-wrap">
-        <div class="dial-glow"></div>
-        <div class="dial">
-          <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
-            <circle class="ring-bg" cx="100" cy="100" r="88"></circle>
-            <circle id="ringFg" class="ring-fg" cx="100" cy="100" r="88"></circle>
-          </svg>
-          <div class="tick"></div>
-          <div class="core">
-            <div id="phase" class="phase">До разминки</div>
-            <div id="timeMirror" class="timeMirror">60:00</div>
-            <div id="next" class="next">Выбери интервал и нажми Старт</div>
+      <div class="cards">
+
+        <div class="card">
+          <h3>Timer</h3>
+
+          <div class="row">
+            <div class="label">
+              <div class="main">Interval presets</div>
+              <div class="sub">Choose default countdown duration</div>
+            </div>
+            <div class="controls" style="width:100%">
+              <div class="preset-grid" style="width:100%" id="presetGrid">
+                <button class="preset" data-min="25">25m</button>
+                <button class="preset" data-min="45">45m</button>
+                <button class="preset active" data-min="60">60m</button>
+                <button class="preset" data-min="90">90m</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="label">
+              <div class="main">Controls</div>
+              <div class="sub">Start / pause / reset</div>
+            </div>
+            <div class="controls">
+              <button class="btn primary" id="btnStart">Start</button>
+              <button class="btn" id="btnPause">Pause</button>
+              <button class="btn" id="btnReset">Reset</button>
+              <button class="btn" id="btnNow">Now</button>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="bottom">
-      <div class="controls">
-        <button id="start" class="btn-main">Старт</button>
-        <button id="pause">Пауза</button>
-        <button id="reset">Сброс</button>
-        <button id="now">Сейчас</button>
-        <button id="notif">Уведомления</button>
-        <button id="backClock">На часы</button>
-      </div>
+        <div class="card">
+          <h3>Clock display</h3>
 
-      <div id="presets" class="presets">
-        <button data-min="25">25м</button>
-        <button data-min="45">45м</button>
-        <button data-min="60" class="active">60м</button>
-        <button data-min="90">90м</button>
-      </div>
+          <div class="row">
+            <div class="label">
+              <div class="main">Show seconds</div>
+              <div class="sub">MM:SS vs MM (no seconds)</div>
+            </div>
+            <div class="controls">
+              <label class="switch" id="swSecondsWrap">
+                <input type="checkbox" id="swSeconds" />
+                <span class="knob"></span>
+              </label>
+            </div>
+          </div>
 
-      <!-- Preferences -->
-      <div class="prefs" aria-label="Clock preferences">
-        <div class="pref">
-          <input id="showSeconds" type="checkbox" />
-          <label for="showSeconds">Показывать секунды</label>
+          <div class="row">
+            <div class="label">
+              <div class="main">Full screen dial</div>
+              <div class="sub">Make digits fill the entire screen</div>
+            </div>
+            <div class="controls">
+              <label class="switch" id="swFullWrap">
+                <input type="checkbox" id="swFull" />
+                <span class="knob"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="label">
+              <div class="main">Dial size</div>
+              <div class="sub">Scale digits (desktop aesthetics)</div>
+            </div>
+            <div class="controls">
+              <div class="range">
+                <input type="range" id="rgScale" min="0.80" max="1.25" step="0.01" />
+                <div class="val" id="valScale">1.00</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="label">
+              <div class="main">Brightness</div>
+              <div class="sub">Adjust for day/night</div>
+            </div>
+            <div class="controls">
+              <div class="range">
+                <input type="range" id="rgBright" min="0.50" max="1.40" step="0.01" />
+                <div class="val" id="valBright">1.00</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="label">
+              <div class="main">Glow</div>
+              <div class="sub">How much “light” around digits</div>
+            </div>
+            <div class="controls">
+              <div class="range">
+                <input type="range" id="rgGlow" min="0.00" max="1.60" step="0.01" />
+                <div class="val" id="valGlow">0.90</div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="pref">
-          <label for="dialFullscreen">Циферблат на весь экран</label>
-          <input id="dialFullscreen" type="checkbox" />
+        <div class="card">
+          <h3>Notifications</h3>
+
+          <div class="row">
+            <div class="label">
+              <div class="main">Browser notifications</div>
+              <div class="sub">Enable reminders (PWA recommended on iOS)</div>
+            </div>
+            <div class="controls">
+              <button class="btn" id="btnNotif">Enable</button>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="label">
+              <div class="main">Stats</div>
+              <div class="sub">Today / streak / push-ups</div>
+            </div>
+            <div class="controls" style="gap:8px">
+              <div class="badge">Today: <b id="stToday">0</b></div>
+              <div class="badge">Streak: <b id="stStreak">0</b></div>
+              <div class="badge">Push: <b id="stPush">0</b></div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="label">
+              <div class="main">Reset preferences</div>
+              <div class="sub">Restore defaults (display only)</div>
+            </div>
+            <div class="controls">
+              <button class="btn danger" id="btnResetPrefs">Reset display</button>
+            </div>
+          </div>
         </div>
 
-        <div class="pref">
-          <label for="scaleRange">Размер</label>
-          <input id="scaleRange" type="range" min="0.80" max="1.25" step="0.01" />
-          <span id="scaleVal" class="small"></span>
+        <div class="card">
+          <h3>Navigation</h3>
+          <div class="row">
+            <div class="label">
+              <div class="main">Back to clock</div>
+              <div class="sub">Swipe right or tap button</div>
+            </div>
+            <div class="controls">
+              <button class="btn primary" id="btnBack">Back</button>
+            </div>
+          </div>
+          <div class="row">
+            <div class="label">
+              <div class="main">Shortcuts</div>
+              <div class="sub">Space: switch screens • S: start/pause • R: reset • N: reminder • F: full screen</div>
+            </div>
+            <div class="controls"></div>
+          </div>
         </div>
 
-        <div class="pref">
-          <label for="brightRange">Яркость</label>
-          <input id="brightRange" type="range" min="0.50" max="1.40" step="0.01" />
-          <span id="brightVal" class="small"></span>
-        </div>
-
-        <div class="pref">
-          <label for="glowRange">Свечение</label>
-          <input id="glowRange" type="range" min="0.00" max="1.60" step="0.01" />
-          <span id="glowVal" class="small"></span>
-        </div>
       </div>
+    </section>
 
-      <div class="meta">
-        <span class="chip">Сегодня: <b id="stToday">0</b></span>
-        <span class="chip">Стрик: <b id="stStreak">0</b></span>
-        <span class="chip">Отжиманий: <b id="stPush">0</b></span>
-      </div>
-    </div>
-  </section>
+  </div>
 </div>
 
+<!-- Reminder overlay -->
 <div id="overlay" class="overlay" role="dialog" aria-modal="true">
   <div class="modal">
     <h2 id="mTitle">Время размяться</h2>
     <p id="mDose"></p>
     <p id="mHint" class="hint"></p>
     <div class="modal-actions">
-      <button id="done" class="btn-main">Сделано</button>
-      <button id="snooze">Отложить 5 мин</button>
-      <button id="skip">Пропустить</button>
+      <button class="btn primary" id="done">Сделано</button>
+      <button class="btn" id="snooze">Отложить 5 мин</button>
+      <button class="btn" id="skip">Пропустить</button>
     </div>
   </div>
 </div>
@@ -406,217 +598,286 @@ button:active{transform:translateY(1px)}
 <div id="toast" class="toast"></div>
 
 <script>
-const KEY_STATS="fitpush_stats_v1";
-const KEY_PREFS="fitpush_clock_prefs_v1";
-const IS_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
-const IS_STANDALONE=window.matchMedia("(display-mode: standalone)").matches||window.navigator.standalone===true;
+/* =========================
+   STATE + STORAGE
+   ========================= */
+const KEY_STATS = "fitpush_stats_v2";
+const KEY_PREFS = "fitpush_prefs_v2";
 
-const EX=[
-  {n:"Отжимания",d:"10 повторов",h:"Ровный корпус, полная амплитуда.",p:10,m:1},
-  {n:"Приседания",d:"15 повторов",h:"Пятки прижаты, колени по линии стоп.",m:1},
-  {n:"Планка",d:"30 секунд",h:"Не прогибай поясницу.",m:1},
-  {n:"Растяжка плеч",d:"45 секунд",h:"Плавно, без рывков.",m:1},
-  {n:"Прогулка",d:"2 минуты",h:"Встань и пройдись по комнате.",m:2},
-  {n:"Выпады",d:"8 на каждую сторону",h:"Контроль баланса и шага.",m:1}
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+const IS_STANDALONE = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+
+const EX = [
+  {n:"Отжимания", d:"10 повторов", h:"Ровный корпус, полная амплитуда.", p:10, m:1},
+  {n:"Приседания", d:"15 повторов", h:"Пятки прижаты, колени по линии стоп.", m:1},
+  {n:"Планка", d:"30 секунд", h:"Не прогибай поясницу.", m:1},
+  {n:"Растяжка плеч", d:"45 секунд", h:"Плавно, без рывков.", m:1},
+  {n:"Прогулка", d:"2 минуты", h:"Встань и пройдись по комнате.", m:2},
+  {n:"Выпады", d:"8 на каждую сторону", h:"Контроль баланса и шага.", m:1}
 ];
 
-const S={
-  min:60,total:3600,left:3600,
-  run:false,end:null,id:null,cur:null,
+const S = {
+  min:60,
+  total:3600,
+  left:3600,
+  run:false,
+  end:null,
+  id:null,
+  cur:null,
   stats:{today:0,push:0,streak:0,last:""},
   prefs:{
-    showSeconds:false,
-    fullscreen:false,
+    showSeconds:true,
+    fullScreen:false,
     scale:1.00,
     bright:1.00,
-    glow:1.00
+    glow:0.90
   }
 };
 
-const E={
-  // Screens
-  screenClock: document.getElementById("screenClock"),
-  screenSettings: document.getElementById("screenSettings"),
-  openSettings: document.getElementById("openSettings"),
-  backClock: document.getElementById("backClock"),
+function day(d=new Date()){ return d.toISOString().slice(0,10); }
 
-  // Clock output
-  statusClock: document.getElementById("statusClock"),
-  time: document.getElementById("time"),
-  timeMirror: document.getElementById("timeMirror"),
-
-  // Main UI
-  status: document.getElementById("status"),
-  phase: document.getElementById("phase"),
-  next: document.getElementById("next"),
-  ring: document.getElementById("ringFg"),
-  start: document.getElementById("start"),
-  pause: document.getElementById("pause"),
-  reset: document.getElementById("reset"),
-  now: document.getElementById("now"),
-  notif: document.getElementById("notif"),
-  presets: document.getElementById("presets"),
-  stToday: document.getElementById("stToday"),
-  stPush: document.getElementById("stPush"),
-  stStreak: document.getElementById("stStreak"),
-
-  // prefs
-  showSeconds: document.getElementById("showSeconds"),
-  dialFullscreen: document.getElementById("dialFullscreen"),
-  scaleRange: document.getElementById("scaleRange"),
-  brightRange: document.getElementById("brightRange"),
-  glowRange: document.getElementById("glowRange"),
-  scaleVal: document.getElementById("scaleVal"),
-  brightVal: document.getElementById("brightVal"),
-  glowVal: document.getElementById("glowVal"),
-
-  // overlay
-  overlay: document.getElementById("overlay"),
-  mTitle: document.getElementById("mTitle"),
-  mDose: document.getElementById("mDose"),
-  mHint: document.getElementById("mHint"),
-  done: document.getElementById("done"),
-  snooze: document.getElementById("snooze"),
-  skip: document.getElementById("skip"),
-  toast: document.getElementById("toast")
-};
-
-const CIRC=2*Math.PI*88;
-E.ring.setAttribute("stroke-dasharray",String(CIRC));
-
-/* ===== Helpers ===== */
-function fmtMMSS(s){
-  const m=Math.floor(s/60),x=s%60;
-  return String(m).padStart(2,"0")+":"+String(x).padStart(2,"0");
-}
-function fmtMMSS_withSeconds(s){
-  // same as MM:SS, but we wrap seconds to style smaller
-  const m=Math.floor(s/60),x=s%60;
-  const mm=String(m).padStart(2,"0");
-  const ss=String(x).padStart(2,"0");
-  return `${mm}:<span class="sec">${ss}</span>`;
-}
-function day(d=new Date()){return d.toISOString().slice(0,10)}
-function nowHM(){
-  return new Date().toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
-}
-
-/* ===== Storage ===== */
 function saveStats(){ localStorage.setItem(KEY_STATS, JSON.stringify(S.stats)); }
 function loadStats(){
   try{
-    const x=localStorage.getItem(KEY_STATS);
-    if(x) S.stats={...S.stats,...JSON.parse(x)};
+    const raw = localStorage.getItem(KEY_STATS);
+    if(raw) S.stats = {...S.stats, ...JSON.parse(raw)};
   }catch(_){}
-  const t=day();
-  if(S.stats.last && S.stats.last!==t){
+  const t = day();
+  if(S.stats.last && S.stats.last !== t){
     const y=new Date(); y.setDate(y.getDate()-1);
-    S.stats.streak = (S.stats.last===day(y)) ? (S.stats.streak+1) : 0;
-    S.stats.today=0; S.stats.push=0;
+    S.stats.streak = (S.stats.last === day(y)) ? (S.stats.streak + 1) : 0;
+    S.stats.today = 0;
+    S.stats.push = 0;
   }
-  S.stats.last=t;
+  S.stats.last = t;
   saveStats();
 }
 
 function savePrefs(){ localStorage.setItem(KEY_PREFS, JSON.stringify(S.prefs)); }
 function loadPrefs(){
   try{
-    const x=localStorage.getItem(KEY_PREFS);
-    if(x){
-      const p=JSON.parse(x);
-      S.prefs={...S.prefs,...p};
-    }
+    const raw = localStorage.getItem(KEY_PREFS);
+    if(raw) S.prefs = {...S.prefs, ...JSON.parse(raw)};
   }catch(_){}
 }
 
-/* ===== UI: screens ===== */
-function showClock(){
-  E.screenClock.classList.add("active");
-  E.screenSettings.classList.remove("active");
-}
-function showSettings(){
-  E.screenSettings.classList.add("active");
-  E.screenClock.classList.remove("active");
+/* =========================
+   DOM
+   ========================= */
+const track = document.getElementById("track");
+const dot0 = document.getElementById("dot0");
+const dot1 = document.getElementById("dot1");
+
+const clockTime = document.getElementById("clockTime");
+const statusBadge = document.getElementById("statusBadge");
+
+const presetGrid = document.getElementById("presetGrid");
+
+const btnStart = document.getElementById("btnStart");
+const btnPause = document.getElementById("btnPause");
+const btnReset = document.getElementById("btnReset");
+const btnNow   = document.getElementById("btnNow");
+const btnBack  = document.getElementById("btnBack");
+
+const btnNotif = document.getElementById("btnNotif");
+const stToday  = document.getElementById("stToday");
+const stStreak = document.getElementById("stStreak");
+const stPush   = document.getElementById("stPush");
+
+const swSeconds = document.getElementById("swSeconds");
+const swSecondsWrap = document.getElementById("swSecondsWrap");
+const swFull = document.getElementById("swFull");
+const swFullWrap = document.getElementById("swFullWrap");
+
+const rgScale = document.getElementById("rgScale");
+const rgBright = document.getElementById("rgBright");
+const rgGlow = document.getElementById("rgGlow");
+const valScale = document.getElementById("valScale");
+const valBright = document.getElementById("valBright");
+const valGlow = document.getElementById("valGlow");
+
+const btnResetPrefs = document.getElementById("btnResetPrefs");
+
+const overlay = document.getElementById("overlay");
+const mTitle = document.getElementById("mTitle");
+const mDose = document.getElementById("mDose");
+const mHint = document.getElementById("mHint");
+const done = document.getElementById("done");
+const snooze = document.getElementById("snooze");
+const skip = document.getElementById("skip");
+
+const toastEl = document.getElementById("toast");
+
+/* =========================
+   SCREEN NAV (swipe)
+   ========================= */
+let page = 0; // 0 clock, 1 settings
+
+function setPage(p, animate=true){
+  page = Math.max(0, Math.min(1, p));
+  track.style.transition = animate ? "transform 280ms ease" : "none";
+  track.style.transform = `translateX(${-page*50}%)`; // 0% or -50% (because width is 200%)
+  dot0.classList.toggle("active", page===0);
+  dot1.classList.toggle("active", page===1);
 }
 
-/* ===== Apply prefs to UI ===== */
+btnBack.addEventListener("click", ()=>setPage(0,true));
+
+/* swipe detection */
+let startX=0, startY=0, dragging=false;
+let lastDx=0;
+
+function onStart(e){
+  const t = e.touches ? e.touches[0] : e;
+  startX = t.clientX;
+  startY = t.clientY;
+  dragging = true;
+  lastDx = 0;
+  track.style.transition = "none";
+}
+function onMove(e){
+  if(!dragging) return;
+  const t = e.touches ? e.touches[0] : e;
+  const dx = t.clientX - startX;
+  const dy = t.clientY - startY;
+
+  // if user scrolls vertically on settings, ignore horizontal drag
+  if(page===1 && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) return;
+
+  lastDx = dx;
+
+  // convert dx px -> percent of viewport width for smoother drag
+  const vw = window.innerWidth;
+  const base = -page * 50;
+  const deltaPercent = (dx / vw) * 50;
+  const pos = base + deltaPercent;
+
+  // clamp a bit (rubber band)
+  const clamped = Math.max(-50 - 10, Math.min(0 + 10, pos));
+  track.style.transform = `translateX(${clamped}%)`;
+}
+function onEnd(){
+  if(!dragging) return;
+  dragging = false;
+
+  const threshold = Math.max(60, window.innerWidth * 0.12);
+  if(lastDx < -threshold) setPage(1,true);
+  else if(lastDx > threshold) setPage(0,true);
+  else setPage(page,true);
+}
+
+document.addEventListener("touchstart", onStart, {passive:true});
+document.addEventListener("touchmove", onMove, {passive:true});
+document.addEventListener("touchend", onEnd, {passive:true});
+
+document.addEventListener("mousedown", onStart);
+document.addEventListener("mousemove", onMove);
+document.addEventListener("mouseup", onEnd);
+
+/* keyboard shortcuts */
+document.addEventListener("keydown",(e)=>{
+  const k = e.key.toLowerCase();
+  if(e.code==="Space"){
+    e.preventDefault();
+    setPage(page===0 ? 1 : 0, true);
+  }
+  if(k==="arrowleft") setPage(0,true);
+  if(k==="arrowright") setPage(1,true);
+
+  if(k==="s"){ S.run ? pause() : start(); }
+  if(k==="r"){ reset(); }
+  if(k==="n"){ fire("manual"); }
+  if(k==="f"){
+    S.prefs.fullScreen = !S.prefs.fullScreen;
+    applyPrefs();
+    toast(S.prefs.fullScreen ? "Full screen" : "Normal");
+  }
+  if(k==="escape"){ overlay.classList.remove("show"); }
+});
+
+/* =========================
+   PREFS APPLY
+   ========================= */
 function applyPrefs(){
-  // seconds
-  E.showSeconds.checked = !!S.prefs.showSeconds;
+  // switches UI
+  swSeconds.checked = !!S.prefs.showSeconds;
+  swSecondsWrap.classList.toggle("on", swSeconds.checked);
 
-  // fullscreen dial
-  E.dialFullscreen.checked = !!S.prefs.fullscreen;
-  document.body.classList.toggle("fullscreen-dial", !!S.prefs.fullscreen);
+  swFull.checked = !!S.prefs.fullScreen;
+  swFullWrap.classList.toggle("on", swFull.checked);
 
-  // scale/brightness/glow -> CSS variables
+  // sliders UI
+  rgScale.value = String(S.prefs.scale);
+  rgBright.value = String(S.prefs.bright);
+  rgGlow.value = String(S.prefs.glow);
+
+  valScale.textContent = Number(S.prefs.scale).toFixed(2);
+  valBright.textContent = Number(S.prefs.bright).toFixed(2);
+  valGlow.textContent = Number(S.prefs.glow).toFixed(2);
+
+  // CSS vars
   document.documentElement.style.setProperty("--clock-scale", String(S.prefs.scale));
   document.documentElement.style.setProperty("--clock-bright", String(S.prefs.bright));
   document.documentElement.style.setProperty("--clock-glow", String(S.prefs.glow));
 
-  // sliders
-  E.scaleRange.value = String(S.prefs.scale);
-  E.brightRange.value = String(S.prefs.bright);
-  E.glowRange.value = String(S.prefs.glow);
-
-  E.scaleVal.textContent = Number(S.prefs.scale).toFixed(2);
-  E.brightVal.textContent = Number(S.prefs.bright).toFixed(2);
-  E.glowVal.textContent = Number(S.prefs.glow).toFixed(2);
+  // full screen class
+  document.body.classList.toggle("fullscreen-dial", !!S.prefs.fullScreen);
 
   savePrefs();
-  render(); // refresh time formatting
+  render();
 }
 
-/* ===== Render ===== */
+/* =========================
+   TIMER + RENDER
+   ========================= */
+function fmtMM(s){
+  const m = Math.floor(s/60);
+  return String(m).padStart(2,"0");
+}
+function fmtMMSS_plain(s){
+  const m=Math.floor(s/60), x=s%60;
+  return `${String(m).padStart(2,"0")}:${String(x).padStart(2,"0")}`;
+}
+function fmtMMSS_html(s){
+  const m=Math.floor(s/60), x=s%60;
+  return `${String(m).padStart(2,"0")}:<span class="sec">${String(x).padStart(2,"0")}</span>`;
+}
+
 function render(){
-  // time output based on preference
+  // main clock screen output
   if(S.prefs.showSeconds){
-    E.time.innerHTML = fmtMMSS_withSeconds(S.left);
+    clockTime.innerHTML = fmtMMSS_html(S.left);
   }else{
-    E.time.textContent = fmtMMSS(S.left);
+    clockTime.textContent = fmtMM(S.left);
   }
 
-  // mirror time in settings (plain text is fine)
-  E.timeMirror.textContent = fmtMMSS(S.left);
-
-  // ring progress
-  const r=Math.max(0,Math.min(1,1-S.left/S.total));
-  E.ring.style.strokeDashoffset=String(CIRC*(1-r));
-
-  // status
-  if(S.run) E.status.textContent="В работе";
-  else if(S.left!==S.total) E.status.textContent="Пауза";
-  else E.status.textContent="Ожидание";
-
-  // urgency coloring only in settings
-  if(S.left<=60) E.timeMirror.style.color="var(--danger)";
-  else if(S.left<=300) E.timeMirror.style.color="var(--warn)";
-  else E.timeMirror.style.color="var(--text)";
+  // status badge (settings)
+  if(S.run) statusBadge.textContent="В работе";
+  else if(S.left!==S.total) statusBadge.textContent="Пауза";
+  else statusBadge.textContent="Ожидание";
 
   // stats
-  E.stToday.textContent=String(S.stats.today||0);
-  E.stPush.textContent=String(S.stats.push||0);
-  E.stStreak.textContent=String(S.stats.streak||0);
-  E.statusClock.textContent = nowHM();
+  stToday.textContent = String(S.stats.today||0);
+  stStreak.textContent = String(S.stats.streak||0);
+  stPush.textContent = String(S.stats.push||0);
 
-  document.title=(S.run?fmtMMSS(S.left)+" - ":"")+"FitPush";
+  // title (keep minimal)
+  document.title = (S.run ? fmtMMSS_plain(S.left)+" · " : "") + "FitPush";
 }
 
-/* ===== Timer logic ===== */
 function pick(min){
   S.min=min;
   S.total=min*60;
   S.left=S.total;
   S.end=null;
-
-  if(S.id){clearInterval(S.id);S.id=null}
+  if(S.id){ clearInterval(S.id); S.id=null; }
   S.run=false;
 
-  Array.from(E.presets.querySelectorAll("button")).forEach(b=>{
+  // active preset
+  presetGrid.querySelectorAll(".preset").forEach(b=>{
     b.classList.toggle("active", Number(b.dataset.min)===min);
   });
 
-  E.phase.textContent="До разминки";
-  E.next.textContent="Интервал: "+min+" минут";
   render();
 }
 
@@ -624,13 +885,12 @@ function start(){
   if(S.run) return;
   S.run=true;
   S.end=Date.now()+S.left*1000;
-  E.phase.textContent="До разминки";
 
   S.id=setInterval(()=>{
-    S.left=Math.max(0,Math.round((S.end-Date.now())/1000));
+    S.left=Math.max(0, Math.round((S.end - Date.now())/1000));
     render();
     if(S.left<=0){
-      clearInterval(S.id);S.id=null;
+      clearInterval(S.id); S.id=null;
       S.run=false;
       fire("timer");
     }
@@ -641,61 +901,54 @@ function start(){
 function pause(){
   if(!S.run) return;
   S.run=false;
-  if(S.id){clearInterval(S.id);S.id=null}
+  if(S.id){ clearInterval(S.id); S.id=null; }
   render();
 }
 function reset(){
   pause();
   S.left=S.total;
-  E.phase.textContent="До разминки";
-  E.next.textContent="Интервал: "+S.min+" минут";
   render();
 }
 
-/* ===== Toast ===== */
-function toast(msg){
-  E.toast.textContent=msg;
-  E.toast.classList.add("show");
-  setTimeout(()=>E.toast.classList.remove("show"), 2200);
-}
-
-/* ===== Reminder modal ===== */
+/* =========================
+   REMINDER FLOW
+   ========================= */
 function fire(src){
-  S.cur=EX[Math.floor(Math.random()*EX.length)];
-  E.mTitle.textContent=S.cur.n;
-  E.mDose.textContent="Цель: "+S.cur.d;
-  E.mHint.textContent=S.cur.h;
-  E.next.textContent="Сейчас: "+S.cur.n;
-  E.phase.textContent="Разминка";
-  E.overlay.classList.add("show");
+  S.cur = EX[Math.floor(Math.random()*EX.length)];
+  mTitle.textContent = S.cur.n;
+  mDose.textContent = "Цель: " + S.cur.d;
+  mHint.textContent = S.cur.h;
+  overlay.classList.add("show");
   sound(); vib(); notify(S.cur.n+" - "+S.cur.d);
 }
-function done(){
+function doneAction(){
   if(!S.cur) return;
-  S.stats.today+=1;
-  if(S.cur.p) S.stats.push+=(S.cur.p||0);
-  S.stats.last=day();
+  S.stats.today += 1;
+  if(S.cur.p) S.stats.push += (S.cur.p||0);
+  S.stats.last = day();
   saveStats();
+
   S.cur=null;
-  E.overlay.classList.remove("show");
+  overlay.classList.remove("show");
+  reset();
+  start();
+}
+function skipAction(){
+  S.cur=null;
+  overlay.classList.remove("show");
   reset(); start();
 }
-function skip(){
+function snoozeAction(){
   S.cur=null;
-  E.overlay.classList.remove("show");
-  reset(); start();
-}
-function snooze(){
-  S.cur=null;
-  E.overlay.classList.remove("show");
+  overlay.classList.remove("show");
   S.left=300;
   S.total=Math.max(S.total,300);
-  E.phase.textContent="Отложено";
-  E.next.textContent="Напоминание через 5 минут";
   start();
 }
 
-/* ===== Notifications ===== */
+/* =========================
+   NOTIFICATIONS
+   ========================= */
 function sound(){
   try{
     const c=new(window.AudioContext||window.webkitAudioContext)(),t=c.currentTime;
@@ -709,23 +962,26 @@ function sound(){
     });
   }catch(_){}
 }
-function vib(){try{if("vibrate" in navigator)navigator.vibrate([140,80,140])}catch(_){}}
+function vib(){ try{ if("vibrate" in navigator) navigator.vibrate([140,80,140]); }catch(_){} }
 
 function askNotif(){
-  if(!("Notification" in window)) return;
+  if(!("Notification" in window)) { toast("No Notification API"); return; }
   if(IS_IOS && !IS_STANDALONE){
-    alert("На iPhone сначала добавь приложение на экран Домой.");
+    alert("На iPhone уведомления стабильнее в режиме PWA: добавь на экран Домой.");
     return;
   }
-  if(Notification.permission==="default") Notification.requestPermission().finally(updNotif);
-  else updNotif();
+  if(Notification.permission==="default"){
+    Notification.requestPermission().finally(updateNotifBtn);
+  }else{
+    updateNotifBtn();
+  }
 }
-function updNotif(){
-  if(!("Notification" in window)){ E.notif.textContent="Нет API"; E.notif.disabled=true; return; }
-  if(IS_IOS && !IS_STANDALONE){ E.notif.textContent="Через Домой"; return; }
-  if(Notification.permission==="granted") E.notif.textContent="Включено";
-  else if(Notification.permission==="denied") E.notif.textContent="Блок";
-  else E.notif.textContent="Уведомления";
+function updateNotifBtn(){
+  if(!("Notification" in window)){ btnNotif.textContent="Not supported"; btnNotif.disabled=true; return; }
+  if(IS_IOS && !IS_STANDALONE){ btnNotif.textContent="Use PWA (iOS)"; return; }
+  if(Notification.permission==="granted") btnNotif.textContent="Enabled";
+  else if(Notification.permission==="denied") btnNotif.textContent="Blocked";
+  else btnNotif.textContent="Enable";
 }
 function notify(body){
   if("Notification" in window && Notification.permission==="granted"){
@@ -733,113 +989,108 @@ function notify(body){
   }
 }
 
-/* ===== PWA ===== */
+/* =========================
+   TOAST
+   ========================= */
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  setTimeout(()=>toastEl.classList.remove("show"), 2200);
+}
+
+/* =========================
+   PWA
+   ========================= */
 function pwa(){
   if(!("serviceWorker" in navigator)) return;
-  const ok=location.protocol==="https:" || location.hostname==="localhost" || location.hostname==="127.0.0.1";
+  const ok = location.protocol==="https:" || location.hostname==="localhost" || location.hostname==="127.0.0.1";
   if(ok) navigator.serviceWorker.register("./sw.js").catch(()=>{});
 }
 
-/* ===== Wire UI events ===== */
-E.presets.addEventListener("click", e=>{
-  const b=e.target.closest("button[data-min]");
+/* =========================
+   EVENTS
+   ========================= */
+presetGrid.addEventListener("click",(e)=>{
+  const b = e.target.closest(".preset");
   if(!b) return;
   pick(Number(b.dataset.min));
 });
-E.start.addEventListener("click", start);
-E.pause.addEventListener("click", pause);
-E.reset.addEventListener("click", reset);
-E.now.addEventListener("click", ()=>fire("manual"));
-E.notif.addEventListener("click", askNotif);
-E.done.addEventListener("click", done);
-E.skip.addEventListener("click", skip);
-E.snooze.addEventListener("click", snooze);
 
-/* Screens */
-E.openSettings.addEventListener("click", showSettings);
-E.backClock.addEventListener("click", showClock);
+btnStart.addEventListener("click", start);
+btnPause.addEventListener("click", pause);
+btnReset.addEventListener("click", reset);
+btnNow.addEventListener("click", ()=>fire("manual"));
+btnNotif.addEventListener("click", askNotif);
 
-/* Preferences events */
-E.showSeconds.addEventListener("change", ()=>{
-  S.prefs.showSeconds = E.showSeconds.checked;
+done.addEventListener("click", doneAction);
+skip.addEventListener("click", skipAction);
+snooze.addEventListener("click", snoozeAction);
+
+swSeconds.addEventListener("change", ()=>{
+  S.prefs.showSeconds = swSeconds.checked;
+  swSecondsWrap.classList.toggle("on", swSeconds.checked);
   savePrefs(); render();
 });
-E.dialFullscreen.addEventListener("change", ()=>{
-  S.prefs.fullscreen = E.dialFullscreen.checked;
+swFull.addEventListener("change", ()=>{
+  S.prefs.fullScreen = swFull.checked;
+  swFullWrap.classList.toggle("on", swFull.checked);
   applyPrefs();
 });
-E.scaleRange.addEventListener("input", ()=>{
-  S.prefs.scale = Number(E.scaleRange.value);
-  E.scaleVal.textContent = Number(S.prefs.scale).toFixed(2);
+
+rgScale.addEventListener("input", ()=>{
+  S.prefs.scale = Number(rgScale.value);
+  valScale.textContent = S.prefs.scale.toFixed(2);
   document.documentElement.style.setProperty("--clock-scale", String(S.prefs.scale));
   savePrefs();
 });
-E.scaleRange.addEventListener("change", render);
+rgScale.addEventListener("change", render);
 
-E.brightRange.addEventListener("input", ()=>{
-  S.prefs.bright = Number(E.brightRange.value);
-  E.brightVal.textContent = Number(S.prefs.bright).toFixed(2);
+rgBright.addEventListener("input", ()=>{
+  S.prefs.bright = Number(rgBright.value);
+  valBright.textContent = S.prefs.bright.toFixed(2);
   document.documentElement.style.setProperty("--clock-bright", String(S.prefs.bright));
   savePrefs();
 });
-E.brightRange.addEventListener("change", render);
+rgBright.addEventListener("change", render);
 
-E.glowRange.addEventListener("input", ()=>{
-  S.prefs.glow = Number(E.glowRange.value);
-  E.glowVal.textContent = Number(S.prefs.glow).toFixed(2);
+rgGlow.addEventListener("input", ()=>{
+  S.prefs.glow = Number(rgGlow.value);
+  valGlow.textContent = S.prefs.glow.toFixed(2);
   document.documentElement.style.setProperty("--clock-glow", String(S.prefs.glow));
   savePrefs();
 });
-E.glowRange.addEventListener("change", render);
+rgGlow.addEventListener("change", render);
 
-/* Keyboard shortcuts:
-   Space = toggle screens
-   S = start/pause
-   R = reset
-   N = manual reminder
-   F = toggle full-screen dial
-   Esc = close overlay
-*/
-document.addEventListener("keydown", e=>{
-  const k=e.key.toLowerCase();
-
-  if(e.code==="Space"){
-    e.preventDefault();
-    if(E.screenClock.classList.contains("active")) showSettings();
-    else showClock();
-  }
-  if(k==="s"){ S.run ? pause() : start(); }
-  if(k==="r"){ reset(); }
-  if(k==="n"){ fire("manual"); }
-  if(k==="f"){
-    S.prefs.fullscreen = !S.prefs.fullscreen;
-    applyPrefs();
-    toast(S.prefs.fullscreen ? "Full screen dial" : "Normal dial");
-  }
-  if(k==="escape"){ E.overlay.classList.remove("show"); }
+btnResetPrefs.addEventListener("click", ()=>{
+  S.prefs = { showSeconds:true, fullScreen:false, scale:1.00, bright:1.00, glow:0.90 };
+  applyPrefs();
+  toast("Display reset");
 });
 
+/* keep timer correct after tab switch */
 document.addEventListener("visibilitychange", ()=>{
   if(document.visibilityState==="visible" && S.run && S.end){
-    S.left=Math.max(0,Math.round((S.end-Date.now())/1000));
+    S.left=Math.max(0, Math.round((S.end - Date.now())/1000));
     if(S.left<=0){
-      if(S.id){clearInterval(S.id);S.id=null}
-      S.run=false; fire("timer");
+      if(S.id){clearInterval(S.id); S.id=null}
+      S.run=false;
+      fire("timer");
     }
     render();
   }
 });
 
-/* ===== Init ===== */
+/* =========================
+   INIT
+   ========================= */
 loadStats();
 loadPrefs();
 applyPrefs();
 pick(60);
-updNotif();
+updateNotifBtn();
 render();
 pwa();
-showClock();
-setInterval(()=>{ E.statusClock.textContent = nowHM(); }, 1000);
+setPage(0,false);
 </script>
 </body>
 </html>
