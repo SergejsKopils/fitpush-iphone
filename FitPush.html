@@ -3,12 +3,16 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+<!-- PWA / iOS -->
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="FitPush" />
 <meta name="mobile-web-app-capable" content="yes" />
-<meta name="format-detection" content="telephone=no" />
 <meta name="theme-color" content="#000000" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+
 <title>FitPush</title>
 
 <style>
@@ -17,17 +21,18 @@
   --text:#fff;
 
   /* user prefs */
-  --clock-scale: 1.00;
-  --clock-bright: 1.00;
-  --clock-glow: 0.90;
+  --clock-scale:1.00;      /* 0.80..1.25 */
+  --clock-bright:1.00;     /* 0.50..1.40 */
+  --clock-glow:0.90;       /* 0.00..1.60 */
+  --show-seconds:1;        /* 1 or 0 (used in JS only) */
 
-  /* premium progress (subtle) */
-  --prog-opacity: .14;
+  /* premium progress ring */
+  --prog-opacity:.14;
 
   /* iOS safe */
   --safe-top: env(safe-area-inset-top);
   --safe-bot: env(safe-area-inset-bottom);
-  --vh: 1vh; /* fallback, overwritten by JS on iOS */
+  --vh: 1vh; /* JS fallback */
 }
 
 *{box-sizing:border-box}
@@ -40,18 +45,18 @@ body{
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
-/* Use dynamic viewport on modern iOS + fallback */
+/* dynamic viewport (iOS) */
 .viewport{
   position:fixed;
   inset:0;
   width:100%;
-  height: 100dvh;
-  height: calc(var(--vh) * 100);
+  height:100dvh;
+  height:calc(var(--vh) * 100);
   overflow:hidden;
   background:#000;
 }
 
-/* 2-screen track */
+/* slider */
 .track{
   position:absolute; inset:0;
   display:flex;
@@ -64,7 +69,6 @@ body{
 
 /* ===== CLOCK ===== */
 .clock{background:#000;}
-
 .clock::before{
   content:""; position:absolute; inset:-30%;
   background:
@@ -81,7 +85,7 @@ body{
   pointer-events:none;
 }
 
-/* Progress ring lives INSIDE safe areas */
+/* subtle ring inside safe areas */
 .prog{
   position:absolute;
   inset:
@@ -94,15 +98,13 @@ body{
   filter: drop-shadow(0 0 10px rgba(255,255,255,.04));
 }
 .prog svg{width:100%; height:100%}
-.prog .bg{fill:none; stroke: rgba(255,255,255,.07); stroke-width: 2.2;}
-.prog .fg{fill:none; stroke: rgba(255,255,255,.55); stroke-width: 2.2; stroke-linecap: round; opacity:.78; stroke-dasharray:1; stroke-dashoffset:0;}
+.prog .bg{fill:none; stroke:rgba(255,255,255,.07); stroke-width:2.2;}
+.prog .fg{fill:none; stroke:rgba(255,255,255,.55); stroke-width:2.2; stroke-linecap:round; opacity:.78; stroke-dasharray:1; stroke-dashoffset:0;}
 
-/* True center that does not drift on iOS */
 .clock-center{
   position:absolute; inset:0;
   display:grid;
   place-items:center;
-  /* keep center stable + safe areas */
   padding:
     calc(18px + var(--safe-top))
     18px
@@ -110,6 +112,7 @@ body{
     18px;
 }
 
+/* stable iOS centering */
 .clock-time{
   display:inline-block;
   transform: translate3d(0,0,0) scale(var(--clock-scale));
@@ -117,7 +120,7 @@ body{
   filter: brightness(var(--clock-bright));
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-variant-numeric: tabular-nums;
-  letter-spacing: .06em;
+  letter-spacing:.06em;
   line-height:1;
   text-align:center;
   color:#fff;
@@ -125,7 +128,6 @@ body{
   text-shadow:
     0 0 calc(18px * var(--clock-glow)) rgba(255,255,255,.18),
     0 0 calc(60px * var(--clock-glow)) rgba(255,255,255,.08);
-  /* Fit always inside iPhone: clamp based on viewport */
   font-size: clamp(4.6rem, 18vw, 9.8rem);
 }
 .clock-time .sec{
@@ -135,7 +137,7 @@ body{
   letter-spacing:.10em;
 }
 
-/* dots inside safe bottom */
+/* page dots */
 .dots{
   position:absolute;
   left:50%;
@@ -156,14 +158,11 @@ body{
   height:100%;
   overflow:auto;
   -webkit-overflow-scrolling: touch;
-  /* IMPORTANT: no extra top padding, header handles safe area */
   padding: 0 14px calc(14px + var(--safe-bot));
 }
 
 .header{
-  position:sticky;
-  top:0;
-  z-index:5;
+  position:sticky; top:0; z-index:5;
   padding: calc(12px + var(--safe-top)) 0 12px;
   background:linear-gradient(180deg, rgba(0,0,0,.94), rgba(0,0,0,.74) 70%, transparent);
   backdrop-filter: blur(10px);
@@ -269,6 +268,37 @@ input[type="range"]{width:220px; accent-color:#fff;}
 .toast{position:fixed; left:50%; bottom:calc(18px + var(--safe-bot)); transform:translateX(-50%); padding:10px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.14); background:rgba(0,0,0,.75); color:rgba(255,255,255,.90); font-size:.84rem; display:none; z-index:30;}
 .toast.show{display:block}
 
+/* iOS A2HS helper */
+.a2hs{
+  position:fixed; inset:0;
+  display:none; align-items:flex-end; justify-content:center;
+  padding: 18px 16px calc(16px + var(--safe-bot));
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(10px);
+  z-index:40;
+}
+.a2hs.show{display:flex}
+.a2hs-card{
+  width:min(560px,100%);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:18px;
+  background:rgba(255,255,255,.06);
+  backdrop-filter: blur(14px);
+  padding:14px;
+}
+.a2hs-top{display:flex; align-items:flex-start; justify-content:space-between; gap:10px;}
+.a2hs-title{font-size:1.02rem; letter-spacing:.08em; text-transform:uppercase; opacity:.92;}
+.a2hs-text{margin:10px 0 12px; color:rgba(255,255,255,.78); line-height:1.35; font-size:.95rem;}
+.a2hs-actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
+.small{font-size:.85rem; color:rgba(255,255,255,.60)}
+kbd{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.06);
+  border-radius:8px;
+  padding:2px 6px;
+}
+
 @media (max-width:520px){
   .range{min-width:0}
   input[type="range"]{width:170px}
@@ -282,10 +312,10 @@ input[type="range"]{width:220px; accent-color:#fff;}
   <div class="track" id="track">
 
     <!-- CLOCK -->
-    <section class="screen clock">
+    <section class="screen clock" aria-label="Clock">
       <div class="prog" aria-hidden="true">
         <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-          <path id="pbg" class="bg"
+          <path class="bg"
             d="M8,18 Q8,8 18,8 L82,8 Q92,8 92,18 L92,82 Q92,92 82,92 L18,92 Q8,92 8,82 Z" />
           <path id="pfg" class="fg"
             d="M8,18 Q8,8 18,8 L82,8 Q92,8 92,18 L92,82 Q92,92 82,92 L18,92 Q8,92 8,82 Z" />
@@ -303,7 +333,7 @@ input[type="range"]{width:220px; accent-color:#fff;}
     </section>
 
     <!-- SETTINGS -->
-    <section class="screen settings" id="settingsScreen">
+    <section class="screen settings" id="settingsScreen" aria-label="Settings">
       <div class="header">
         <div class="header-row">
           <div class="title">Settings</div>
@@ -435,6 +465,16 @@ input[type="range"]{width:220px; accent-color:#fff;}
               <button class="btn primary" id="btnBack">Back</button>
             </div>
           </div>
+
+          <div class="row">
+            <div class="label">
+              <div class="main">Install (iPhone)</div>
+              <div class="sub">Show “Add to Home Screen” help</div>
+            </div>
+            <div class="controls">
+              <button class="btn" id="btnA2HS">How to add</button>
+            </div>
+          </div>
         </div>
 
       </div>
@@ -443,6 +483,7 @@ input[type="range"]{width:220px; accent-color:#fff;}
   </div>
 </div>
 
+<!-- Reminder overlay -->
 <div id="overlay" class="overlay" role="dialog" aria-modal="true">
   <div class="modal">
     <h2 id="mTitle">Время размяться</h2>
@@ -458,18 +499,50 @@ input[type="range"]{width:220px; accent-color:#fff;}
 
 <div id="toast" class="toast"></div>
 
+<!-- iOS A2HS helper -->
+<div id="a2hs" class="a2hs" role="dialog" aria-modal="true">
+  <div class="a2hs-card">
+    <div class="a2hs-top">
+      <div>
+        <div class="a2hs-title">Add to Home Screen</div>
+        <div class="small">iPhone / iPad (Safari)</div>
+      </div>
+      <button class="btn" id="a2hsClose">Close</button>
+    </div>
+    <div class="a2hs-text">
+      1) Нажми кнопку <kbd>Share</kbd> (квадрат со стрелкой вверх)<br/>
+      2) Прокрути и выбери <kbd>Add to Home Screen</kbd><br/>
+      3) Нажми <kbd>Add</kbd><br/><br/>
+      После установки запускай FitPush с иконки — режим будет как приложение (standalone).
+    </div>
+    <div class="a2hs-actions">
+      <button class="btn primary" id="a2hsOk">OK</button>
+      <button class="btn" id="a2hsDont">Don’t show again</button>
+    </div>
+  </div>
+</div>
+
 <script>
-/* ===== iOS viewport fix (address bar) ===== */
+/* ========= iOS viewport fix ========= */
 function setVh(){
   document.documentElement.style.setProperty("--vh", (window.innerHeight * 0.01) + "px");
 }
 setVh();
 addEventListener("resize", setVh);
-addEventListener("orientationchange", ()=>setTimeout(setVh, 50));
+addEventListener("orientationchange", ()=>setTimeout(setVh, 80));
 
-/* ===== app state ===== */
-const KEY_STATS="fitpush_stats_v5";
-const KEY_PREFS="fitpush_prefs_v5";
+/* ========= Service Worker (PWA) ========= */
+(function registerSW(){
+  if(!("serviceWorker" in navigator)) return;
+  const isSecure = location.protocol==="https:" || location.hostname==="localhost" || location.hostname==="127.0.0.1";
+  if(!isSecure) return;
+  navigator.serviceWorker.register("./sw.js").catch(()=>{});
+})();
+
+/* ========= state ========= */
+const KEY_STATS="fitpush_stats_v6";
+const KEY_PREFS="fitpush_prefs_v6";
+const KEY_A2HS="fitpush_a2hs_hide_v1";
 
 const IS_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
 const IS_STANDALONE=matchMedia("(display-mode: standalone)").matches || navigator.standalone===true;
@@ -507,7 +580,7 @@ function loadPrefs(){
   try{const raw=localStorage.getItem(KEY_PREFS); if(raw) S.prefs={...S.prefs,...JSON.parse(raw)}}catch(_){}
 }
 
-/* ===== dom ===== */
+/* ========= dom ========= */
 const track=document.getElementById("track");
 const dot0=document.getElementById("dot0");
 const dot1=document.getElementById("dot1");
@@ -545,13 +618,20 @@ const snooze=document.getElementById("snooze");
 const skip=document.getElementById("skip");
 const toastEl=document.getElementById("toast");
 
+/* A2HS */
+const a2hs=document.getElementById("a2hs");
+const btnA2HS=document.getElementById("btnA2HS");
+const a2hsClose=document.getElementById("a2hsClose");
+const a2hsOk=document.getElementById("a2hsOk");
+const a2hsDont=document.getElementById("a2hsDont");
+
 /* progress ring */
 const pfg=document.getElementById("pfg");
 const ringLen=pfg.getTotalLength();
 pfg.style.strokeDasharray=String(ringLen);
 pfg.style.strokeDashoffset=String(ringLen);
 
-/* ===== page nav with spring ===== */
+/* ========= page nav (spring snap) ========= */
 let page=0, isAnimating=false;
 
 function getTranslateXPct(){
@@ -563,7 +643,6 @@ function getTranslateXPct(){
   const tx=parts[4]||0;
   return (tx / window.innerWidth) * 100;
 }
-
 function springTo(targetPct){
   if(isAnimating) return;
   isAnimating=true;
@@ -584,18 +663,16 @@ function springTo(targetPct){
     };
   };
 }
-
 function setPage(p, snap=true){
   page=Math.max(0,Math.min(1,p));
   dot0.classList.toggle("active", page===0);
   dot1.classList.toggle("active", page===1);
   const target=-page*100;
-  if(snap) springTo(target);
-  else track.style.transform=`translateX(${target}%)`;
+  snap ? springTo(target) : (track.style.transform=`translateX(${target}%)`);
 }
 btnBack.addEventListener("click", ()=>setPage(0,true));
 
-/* swipe */
+/* swipe (x vs y separation for settings scroll) */
 let startX=0,startY=0,dragging=false,lastDx=0,lockedAxis=null;
 function isInteractive(el){return !!el.closest("button,a,input,textarea,select,label")}
 function onStart(e){
@@ -615,7 +692,7 @@ function onMove(e){
     if(Math.abs(dx)>10 || Math.abs(dy)>10) lockedAxis=(Math.abs(dx)>Math.abs(dy))?"x":"y";
     else return;
   }
-  if(lockedAxis==="y"){ dragging=false; return; }
+  if(lockedAxis==="y"){ dragging=false; return; } // let settings scroll
 
   lastDx=dx;
   const base=-page*100;
@@ -639,7 +716,7 @@ addEventListener("mousedown",onStart);
 addEventListener("mousemove",onMove);
 addEventListener("mouseup",onEnd);
 
-/* ===== prefs ===== */
+/* ========= prefs ========= */
 function applyPrefs(){
   swSeconds.checked=!!S.prefs.showSeconds;
   swSecondsWrap.classList.toggle("on", swSeconds.checked);
@@ -660,7 +737,7 @@ function applyPrefs(){
   render();
 }
 
-/* ===== timer render ===== */
+/* ========= timer render ========= */
 function fmtMM(s){return String(Math.floor(s/60)).padStart(2,"0")}
 function fmtMMSS_plain(s){
   const m=Math.floor(s/60), x=s%60;
@@ -769,7 +846,24 @@ function notify(body){
   }
 }
 
-/* events */
+/* ========= A2HS helper (iOS) ========= */
+function shouldShowA2HS(){
+  if(!IS_IOS) return false;
+  if(IS_STANDALONE) return false;
+  return localStorage.getItem(KEY_A2HS) !== "1";
+}
+function openA2HS(){ a2hs.classList.add("show"); }
+function closeA2HS(){ a2hs.classList.remove("show"); }
+
+btnA2HS.addEventListener("click", openA2HS);
+a2hsClose.addEventListener("click", closeA2HS);
+a2hsOk.addEventListener("click", closeA2HS);
+a2hsDont.addEventListener("click", ()=>{
+  localStorage.setItem(KEY_A2HS,"1");
+  closeA2HS();
+});
+
+/* ========= events ========= */
 presetGrid.addEventListener("click",(e)=>{const b=e.target.closest(".preset"); if(!b) return; pick(Number(b.dataset.min));});
 btnStart.addEventListener("click",start);
 btnPause.addEventListener("click",pause);
@@ -778,8 +872,8 @@ btnNow.addEventListener("click",()=>fire("manual"));
 btnNotif.addEventListener("click",askNotif);
 
 done.addEventListener("click",doneAction);
-skip.addEventListener("click",skipAction);
-snooze.addEventListener("click",snoozeAction);
+skip.addEventListener("click",()=>{S.cur=null; overlay.classList.remove("show"); reset(); start();});
+snooze.addEventListener("click",()=>{S.cur=null; overlay.classList.remove("show"); S.left=300; S.total=Math.max(S.total,300); start();});
 
 swSeconds.addEventListener("change",()=>{S.prefs.showSeconds=swSeconds.checked; swSecondsWrap.classList.toggle("on", swSeconds.checked); savePrefs(); render();});
 rgScale.addEventListener("input",()=>{S.prefs.scale=Number(rgScale.value); valScale.textContent=S.prefs.scale.toFixed(2); document.documentElement.style.setProperty("--clock-scale", String(S.prefs.scale)); savePrefs();});
@@ -800,7 +894,7 @@ document.addEventListener("visibilitychange",()=>{
   }
 });
 
-/* init */
+/* ========= init ========= */
 loadStats();
 loadPrefs();
 applyPrefs();
@@ -808,6 +902,11 @@ pick(60);
 updateNotifBtn();
 render();
 setPage(0,false);
+
+if(shouldShowA2HS()){
+  // show after first paint
+  setTimeout(openA2HS, 700);
+}
 </script>
 </body>
 </html>
