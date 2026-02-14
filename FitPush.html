@@ -9,23 +9,25 @@
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="format-detection" content="telephone=no" />
 <meta name="theme-color" content="#000000" />
-<link rel="manifest" href="manifest.webmanifest" />
 <title>FitPush</title>
 
 <style>
 :root{
   --bg:#000;
   --text:#fff;
-  --muted:rgba(255,255,255,.55);
-  --line:rgba(255,255,255,.10);
 
   /* user prefs */
-  --clock-scale: 1.00;   /* 0.80..1.25 */
-  --clock-bright: 1.00;  /* 0.50..1.40 */
-  --clock-glow: 0.90;    /* 0.00..1.60 */
+  --clock-scale: 1.00;
+  --clock-bright: 1.00;
+  --clock-glow: 0.90;
 
-  /* premium progress (very subtle) */
-  --prog-opacity: .18;   /* keep subtle */
+  /* premium progress (subtle) */
+  --prog-opacity: .14;
+
+  /* iOS safe */
+  --safe-top: env(safe-area-inset-top);
+  --safe-bot: env(safe-area-inset-bottom);
+  --vh: 1vh; /* fallback, overwritten by JS on iOS */
 }
 
 *{box-sizing:border-box}
@@ -34,22 +36,35 @@ body{
   margin:0;
   background:var(--bg);
   color:var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   overflow:hidden;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
-/* ====== Slider ====== */
-.viewport{position:fixed; inset:0; overflow:hidden; background:#000;}
+/* Use dynamic viewport on modern iOS + fallback */
+.viewport{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height: 100dvh;
+  height: calc(var(--vh) * 100);
+  overflow:hidden;
+  background:#000;
+}
+
+/* 2-screen track */
 .track{
   position:absolute; inset:0;
-  display:flex; width:200%; height:100%;
+  display:flex;
+  width:200%;
+  height:100%;
   transform:translateX(0%);
   will-change:transform;
 }
 .screen{width:100%; height:100%; flex:0 0 100%; position:relative;}
 
-/* ====== Screen 1: Clock ====== */
+/* ===== CLOCK ===== */
 .clock{background:#000;}
+
 .clock::before{
   content:""; position:absolute; inset:-30%;
   background:
@@ -66,98 +81,91 @@ body{
   pointer-events:none;
 }
 
-.clock-center{
-  position:absolute; inset:0;
-  display:grid;
-  place-items:center;
-  padding: calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
-}
-
-/* Premium progress ring (very subtle) */
+/* Progress ring lives INSIDE safe areas */
 .prog{
   position:absolute;
-  inset: 18px;
-  border-radius: 28px;
+  inset:
+    calc(12px + var(--safe-top))
+    12px
+    calc(12px + var(--safe-bot))
+    12px;
   pointer-events:none;
   opacity: var(--prog-opacity);
   filter: drop-shadow(0 0 10px rgba(255,255,255,.04));
 }
 .prog svg{width:100%; height:100%}
-.prog .bg{
-  fill:none;
-  stroke: rgba(255,255,255,.08);
-  stroke-width: 2.2;
-}
-.prog .fg{
-  fill:none;
-  stroke: rgba(255,255,255,.55);
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 0;
-  opacity:.75;
+.prog .bg{fill:none; stroke: rgba(255,255,255,.07); stroke-width: 2.2;}
+.prog .fg{fill:none; stroke: rgba(255,255,255,.55); stroke-width: 2.2; stroke-linecap: round; opacity:.78; stroke-dasharray:1; stroke-dashoffset:0;}
+
+/* True center that does not drift on iOS */
+.clock-center{
+  position:absolute; inset:0;
+  display:grid;
+  place-items:center;
+  /* keep center stable + safe areas */
+  padding:
+    calc(18px + var(--safe-top))
+    18px
+    calc(18px + var(--safe-bot))
+    18px;
 }
 
-/* Fix centering on iOS:
-   - make the time block inline-block (no weird inline metrics)
-   - reduce letter-spacing a bit
-   - render in its own layer to avoid subpixel drift */
 .clock-time{
   display:inline-block;
   transform: translate3d(0,0,0) scale(var(--clock-scale));
-  filter: brightness(var(--clock-bright));
   transform-origin:center;
-
+  filter: brightness(var(--clock-bright));
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-variant-numeric: tabular-nums;
-  /* smaller tracking to prevent visual drift */
   letter-spacing: .06em;
   line-height:1;
   text-align:center;
-  font-size: clamp(5rem, 20vw, 10.5rem);
   color:#fff;
+  -webkit-font-smoothing: antialiased;
   text-shadow:
     0 0 calc(18px * var(--clock-glow)) rgba(255,255,255,.18),
     0 0 calc(60px * var(--clock-glow)) rgba(255,255,255,.08);
-  /* smooth in iOS */
-  -webkit-font-smoothing: antialiased;
+  /* Fit always inside iPhone: clamp based on viewport */
+  font-size: clamp(4.6rem, 18vw, 9.8rem);
 }
 .clock-time .sec{
   display:inline-block;
   font-size:.42em;
   opacity:.92;
   letter-spacing:.10em;
-  transform: translate3d(0,0,0);
 }
 
-/* page dots */
+/* dots inside safe bottom */
 .dots{
   position:absolute;
   left:50%;
-  bottom: max(14px, env(safe-area-inset-bottom));
+  bottom: calc(12px + var(--safe-bot));
   transform:translateX(-50%);
   display:flex; gap:10px;
   opacity:.22;
-  user-select:none;
 }
-.dot{width:6px; height:6px; border-radius:999px; background:#fff; opacity:.30;}
+.dot{width:6px; height:6px; border-radius:999px; background:#fff; opacity:.28;}
 .dot.active{opacity:.92}
 
-/* ====== Screen 2: Settings ====== */
+/* ===== SETTINGS ===== */
 .settings{
   background:
     radial-gradient(circle at 50% -10%, rgba(255,255,255,.06), transparent 48%),
     radial-gradient(circle at 10% 90%, rgba(255,255,255,.04), transparent 40%),
     #000;
-  padding:calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
+  height:100%;
   overflow:auto;
   -webkit-overflow-scrolling: touch;
+  /* IMPORTANT: no extra top padding, header handles safe area */
+  padding: 0 14px calc(14px + var(--safe-bot));
 }
 
 .header{
-  position:sticky; top:0; z-index:5;
-  padding:10px 0 12px;
-  background:linear-gradient(180deg, rgba(0,0,0,.92), rgba(0,0,0,.70) 60%, transparent);
+  position:sticky;
+  top:0;
+  z-index:5;
+  padding: calc(12px + var(--safe-top)) 0 12px;
+  background:linear-gradient(180deg, rgba(0,0,0,.94), rgba(0,0,0,.74) 70%, transparent);
   backdrop-filter: blur(10px);
 }
 .header-row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
@@ -169,7 +177,12 @@ body{
   background:rgba(255,255,255,.03);
 }
 
-.cards{display:grid; gap:12px; max-width:820px; margin:0 auto; padding-bottom:24px;}
+.cards{
+  display:grid; gap:12px;
+  max-width:820px;
+  margin: 6px auto 0;
+  padding-bottom: 18px;
+}
 .card{
   border:1px solid rgba(255,255,255,.10);
   border-radius:18px;
@@ -195,12 +208,11 @@ body{
 .label .sub{font-size:.80rem; color:rgba(255,255,255,.55); line-height:1.25;}
 .controls{display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;}
 
-/* switch */
 .switch{
   position:relative; width:46px; height:28px; border-radius:999px;
   border:1px solid rgba(255,255,255,.14);
   background:rgba(255,255,255,.06);
-  cursor:pointer; flex:0 0 auto;
+  cursor:pointer;
 }
 .switch input{display:none}
 .switch .knob{
@@ -212,7 +224,6 @@ body{
 .switch input:checked + .knob{transform:translateX(18px); opacity:1}
 .switch.on{border-color:rgba(255,255,255,.20); background:rgba(255,255,255,.10)}
 
-/* sliders */
 .range{display:flex; align-items:center; gap:10px; min-width:260px;}
 input[type="range"]{width:220px; accent-color:#fff;}
 .val{
@@ -224,7 +235,6 @@ input[type="range"]{width:220px; accent-color:#fff;}
   text-align:right;
 }
 
-/* buttons */
 .btn{
   border:1px solid rgba(255,255,255,.14);
   background:rgba(255,255,255,.06);
@@ -235,6 +245,7 @@ input[type="range"]{width:220px; accent-color:#fff;}
 }
 .btn:active{transform:translateY(1px)}
 .btn.primary{background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.22)}
+
 .preset-grid{display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px;}
 .preset{
   border:1px solid rgba(255,255,255,.14);
@@ -244,44 +255,18 @@ input[type="range"]{width:220px; accent-color:#fff;}
   border-radius:14px;
   cursor:pointer;
   text-align:center;
-  font-variant-numeric: tabular-nums;
 }
 .preset.active{background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.22)}
 
-/* overlay */
-.overlay{
-  position:fixed; inset:0; display:none;
-  align-items:center; justify-content:center;
-  padding:16px;
-  background:rgba(0,0,0,.78);
-  backdrop-filter: blur(10px);
-  z-index:20;
-}
+/* overlay + toast */
+.overlay{position:fixed; inset:0; display:none; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,.78); backdrop-filter: blur(10px); z-index:20;}
 .overlay.show{display:flex}
-.modal{
-  width:min(520px, 100%);
-  border:1px solid rgba(255,255,255,.14);
-  border-radius:18px;
-  background:rgba(255,255,255,.05);
-  backdrop-filter: blur(14px);
-  padding:16px;
-}
+.modal{width:min(520px,100%); border:1px solid rgba(255,255,255,.14); border-radius:18px; background:rgba(255,255,255,.05); backdrop-filter: blur(14px); padding:16px;}
 .modal h2{margin:0 0 8px;font-size:1.25rem}
 .modal p{margin:4px 0;color:rgba(255,255,255,.86)}
 .modal .hint{font-size:.92rem;color:rgba(255,255,255,.55)}
 .modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-
-.toast{
-  position:fixed; left:50%; bottom:18px;
-  transform:translateX(-50%);
-  padding:10px 12px; border-radius:999px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.75);
-  color:rgba(255,255,255,.90);
-  font-size:.84rem;
-  display:none;
-  z-index:30;
-}
+.toast{position:fixed; left:50%; bottom:calc(18px + var(--safe-bot)); transform:translateX(-50%); padding:10px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.14); background:rgba(0,0,0,.75); color:rgba(255,255,255,.90); font-size:.84rem; display:none; z-index:30;}
 .toast.show{display:block}
 
 @media (max-width:520px){
@@ -296,32 +281,14 @@ input[type="range"]{width:220px; accent-color:#fff;}
 <div class="viewport">
   <div class="track" id="track">
 
-    <!-- SCREEN 1 -->
-    <section class="screen clock" aria-label="Clock">
-      <!-- subtle progress ring -->
+    <!-- CLOCK -->
+    <section class="screen clock">
       <div class="prog" aria-hidden="true">
         <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-          <!-- rounded rectangle approximation with path -->
           <path id="pbg" class="bg"
-            d="M8,18
-               Q8,8 18,8
-               L82,8
-               Q92,8 92,18
-               L92,82
-               Q92,92 82,92
-               L18,92
-               Q8,92 8,82
-               Z" />
+            d="M8,18 Q8,8 18,8 L82,8 Q92,8 92,18 L92,82 Q92,92 82,92 L18,92 Q8,92 8,82 Z" />
           <path id="pfg" class="fg"
-            d="M8,18
-               Q8,8 18,8
-               L82,8
-               Q92,8 92,18
-               L92,82
-               Q92,92 82,92
-               L18,92
-               Q8,92 8,82
-               Z" />
+            d="M8,18 Q8,8 18,8 L82,8 Q92,8 92,18 L92,82 Q92,92 82,92 L18,92 Q8,92 8,82 Z" />
         </svg>
       </div>
 
@@ -335,8 +302,8 @@ input[type="range"]{width:220px; accent-color:#fff;}
       </div>
     </section>
 
-    <!-- SCREEN 2 -->
-    <section class="screen settings" aria-label="Settings" id="settingsScreen">
+    <!-- SETTINGS -->
+    <section class="screen settings" id="settingsScreen">
       <div class="header">
         <div class="header-row">
           <div class="title">Settings</div>
@@ -476,7 +443,6 @@ input[type="range"]{width:220px; accent-color:#fff;}
   </div>
 </div>
 
-<!-- Reminder overlay -->
 <div id="overlay" class="overlay" role="dialog" aria-modal="true">
   <div class="modal">
     <h2 id="mTitle">Время размяться</h2>
@@ -493,248 +459,198 @@ input[type="range"]{width:220px; accent-color:#fff;}
 <div id="toast" class="toast"></div>
 
 <script>
-/* =========================
-   STATE + STORAGE
-   ========================= */
-const KEY_STATS = "fitpush_stats_v4";
-const KEY_PREFS = "fitpush_prefs_v4";
+/* ===== iOS viewport fix (address bar) ===== */
+function setVh(){
+  document.documentElement.style.setProperty("--vh", (window.innerHeight * 0.01) + "px");
+}
+setVh();
+addEventListener("resize", setVh);
+addEventListener("orientationchange", ()=>setTimeout(setVh, 50));
 
-const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-const IS_STANDALONE = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+/* ===== app state ===== */
+const KEY_STATS="fitpush_stats_v5";
+const KEY_PREFS="fitpush_prefs_v5";
 
-const EX = [
-  {n:"Отжимания", d:"10 повторов", h:"Ровный корпус, полная амплитуда.", p:10, m:1},
-  {n:"Приседания", d:"15 повторов", h:"Пятки прижаты, колени по линии стоп.", m:1},
-  {n:"Планка", d:"30 секунд", h:"Не прогибай поясницу.", m:1},
-  {n:"Растяжка плеч", d:"45 секунд", h:"Плавно, без рывков.", m:1},
-  {n:"Прогулка", d:"2 минуты", h:"Встань и пройдись по комнате.", m:2},
-  {n:"Выпады", d:"8 на каждую сторону", h:"Контроль баланса и шага.", m:1}
+const IS_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+const IS_STANDALONE=matchMedia("(display-mode: standalone)").matches || navigator.standalone===true;
+
+const EX=[
+  {n:"Отжимания",d:"10 повторов",h:"Ровный корпус, полная амплитуда.",p:10,m:1},
+  {n:"Приседания",d:"15 повторов",h:"Пятки прижаты, колени по линии стоп.",m:1},
+  {n:"Планка",d:"30 секунд",h:"Не прогибай поясницу.",m:1},
+  {n:"Растяжка плеч",d:"45 секунд",h:"Плавно, без рывков.",m:1},
+  {n:"Прогулка",d:"2 минуты",h:"Встань и пройдись по комнате.",m:2},
+  {n:"Выпады",d:"8 на каждую сторону",h:"Контроль баланса и шага.",m:1}
 ];
 
-const S = {
-  min:60, total:3600, left:3600,
-  run:false, end:null, id:null,
-  cur:null,
+const S={
+  min:60,total:3600,left:3600,
+  run:false,end:null,id:null,cur:null,
   stats:{today:0,push:0,streak:0,last:""},
-  prefs:{ showSeconds:true, scale:1.00, bright:1.00, glow:0.90 }
+  prefs:{showSeconds:true,scale:1.00,bright:1.00,glow:0.90}
 };
 
-function day(d=new Date()){ return d.toISOString().slice(0,10); }
-function saveStats(){ localStorage.setItem(KEY_STATS, JSON.stringify(S.stats)); }
-function savePrefs(){ localStorage.setItem(KEY_PREFS, JSON.stringify(S.prefs)); }
-
+function day(d=new Date()){return d.toISOString().slice(0,10)}
+function saveStats(){localStorage.setItem(KEY_STATS,JSON.stringify(S.stats))}
+function savePrefs(){localStorage.setItem(KEY_PREFS,JSON.stringify(S.prefs))}
 function loadStats(){
-  try{ const raw=localStorage.getItem(KEY_STATS); if(raw) S.stats={...S.stats,...JSON.parse(raw)}; }catch(_){}
+  try{const raw=localStorage.getItem(KEY_STATS); if(raw) S.stats={...S.stats,...JSON.parse(raw)}}catch(_){}
   const t=day();
   if(S.stats.last && S.stats.last!==t){
     const y=new Date(); y.setDate(y.getDate()-1);
     S.stats.streak = (S.stats.last===day(y)) ? (S.stats.streak+1) : 0;
     S.stats.today=0; S.stats.push=0;
   }
-  S.stats.last=t;
-  saveStats();
+  S.stats.last=t; saveStats();
 }
 function loadPrefs(){
-  try{ const raw=localStorage.getItem(KEY_PREFS); if(raw) S.prefs={...S.prefs,...JSON.parse(raw)}; }catch(_){}
+  try{const raw=localStorage.getItem(KEY_PREFS); if(raw) S.prefs={...S.prefs,...JSON.parse(raw)}}catch(_){}
 }
 
-/* =========================
-   DOM
-   ========================= */
-const track = document.getElementById("track");
-const settingsScreen = document.getElementById("settingsScreen");
+/* ===== dom ===== */
+const track=document.getElementById("track");
+const dot0=document.getElementById("dot0");
+const dot1=document.getElementById("dot1");
+const clockTime=document.getElementById("clockTime");
+const statusBadge=document.getElementById("statusBadge");
 
-const dot0 = document.getElementById("dot0");
-const dot1 = document.getElementById("dot1");
+const presetGrid=document.getElementById("presetGrid");
+const btnStart=document.getElementById("btnStart");
+const btnPause=document.getElementById("btnPause");
+const btnReset=document.getElementById("btnReset");
+const btnNow=document.getElementById("btnNow");
+const btnBack=document.getElementById("btnBack");
 
-const clockTime = document.getElementById("clockTime");
-const statusBadge = document.getElementById("statusBadge");
+const btnNotif=document.getElementById("btnNotif");
+const stToday=document.getElementById("stToday");
+const stStreak=document.getElementById("stStreak");
+const stPush=document.getElementById("stPush");
 
-const presetGrid = document.getElementById("presetGrid");
-const btnStart = document.getElementById("btnStart");
-const btnPause = document.getElementById("btnPause");
-const btnReset = document.getElementById("btnReset");
-const btnNow   = document.getElementById("btnNow");
-const btnBack  = document.getElementById("btnBack");
+const swSeconds=document.getElementById("swSeconds");
+const swSecondsWrap=document.getElementById("swSecondsWrap");
 
-const btnNotif = document.getElementById("btnNotif");
-const stToday  = document.getElementById("stToday");
-const stStreak = document.getElementById("stStreak");
-const stPush   = document.getElementById("stPush");
+const rgScale=document.getElementById("rgScale");
+const rgBright=document.getElementById("rgBright");
+const rgGlow=document.getElementById("rgGlow");
+const valScale=document.getElementById("valScale");
+const valBright=document.getElementById("valBright");
+const valGlow=document.getElementById("valGlow");
 
-const swSeconds = document.getElementById("swSeconds");
-const swSecondsWrap = document.getElementById("swSecondsWrap");
+const overlay=document.getElementById("overlay");
+const mTitle=document.getElementById("mTitle");
+const mDose=document.getElementById("mDose");
+const mHint=document.getElementById("mHint");
+const done=document.getElementById("done");
+const snooze=document.getElementById("snooze");
+const skip=document.getElementById("skip");
+const toastEl=document.getElementById("toast");
 
-const rgScale = document.getElementById("rgScale");
-const rgBright = document.getElementById("rgBright");
-const rgGlow = document.getElementById("rgGlow");
-const valScale = document.getElementById("valScale");
-const valBright = document.getElementById("valBright");
-const valGlow = document.getElementById("valGlow");
+/* progress ring */
+const pfg=document.getElementById("pfg");
+const ringLen=pfg.getTotalLength();
+pfg.style.strokeDasharray=String(ringLen);
+pfg.style.strokeDashoffset=String(ringLen);
 
-const overlay = document.getElementById("overlay");
-const mTitle = document.getElementById("mTitle");
-const mDose = document.getElementById("mDose");
-const mHint = document.getElementById("mHint");
-const done = document.getElementById("done");
-const snooze = document.getElementById("snooze");
-const skip = document.getElementById("skip");
-const toastEl = document.getElementById("toast");
+/* ===== page nav with spring ===== */
+let page=0, isAnimating=false;
 
-/* progress ring path length */
-const pfg = document.getElementById("pfg");
-const ringLen = pfg.getTotalLength();
-pfg.style.strokeDasharray = String(ringLen);
-pfg.style.strokeDashoffset = String(ringLen);
-
-/* =========================
-   PAGE NAV + iOS snap
-   ========================= */
-let page = 0;
-let isAnimating = false;
+function getTranslateXPct(){
+  const st=getComputedStyle(track).transform;
+  if(!st || st==="none") return -page*100;
+  const m=st.match(/matrix\(([^)]+)\)/);
+  if(!m) return -page*100;
+  const parts=m[1].split(",").map(x=>parseFloat(x.trim()));
+  const tx=parts[4]||0;
+  return (tx / window.innerWidth) * 100;
+}
 
 function springTo(targetPct){
-  // iOS-like snap: overshoot then settle
-  // Step1 overshoot slightly, Step2 settle.
   if(isAnimating) return;
-  isAnimating = true;
+  isAnimating=true;
 
-  const current = getTranslateXPct();
-  const overshoot = targetPct + (current < targetPct ? 3.5 : -3.5); // small overshoot
-  const dur1 = 180, dur2 = 220;
+  const current=getTranslateXPct();
+  const overshoot = targetPct + (current < targetPct ? 3.2 : -3.2);
 
   track.animate(
     [{transform:`translateX(${current}%)`},{transform:`translateX(${overshoot}%)`}],
-    {duration:dur1, easing:"cubic-bezier(.18,.78,.32,1)", fill:"forwards"}
-  ).onfinish = () => {
+    {duration:170, easing:"cubic-bezier(.18,.78,.32,1)", fill:"forwards"}
+  ).onfinish=()=>{
     track.animate(
       [{transform:`translateX(${overshoot}%)`},{transform:`translateX(${targetPct}%)`}],
-      {duration:dur2, easing:"cubic-bezier(.22,1,.36,1)", fill:"forwards"}
-    ).onfinish = () => {
-      track.style.transform = `translateX(${targetPct}%)`;
-      isAnimating = false;
+      {duration:230, easing:"cubic-bezier(.22,1,.36,1)", fill:"forwards"}
+    ).onfinish=()=>{
+      track.style.transform=`translateX(${targetPct}%)`;
+      isAnimating=false;
     };
   };
 }
 
 function setPage(p, snap=true){
-  page = Math.max(0, Math.min(1, p));
-  const targetPct = -page * 100;
-
+  page=Math.max(0,Math.min(1,p));
   dot0.classList.toggle("active", page===0);
   dot1.classList.toggle("active", page===1);
-
-  if(snap) springTo(targetPct);
-  else track.style.transform = `translateX(${targetPct}%)`;
+  const target=-page*100;
+  if(snap) springTo(target);
+  else track.style.transform=`translateX(${target}%)`;
 }
-
-function getTranslateXPct(){
-  // read current transform percent (best-effort)
-  const st = getComputedStyle(track).transform;
-  if(!st || st==="none") return -page*100;
-  const m = st.match(/matrix\(([^)]+)\)/);
-  if(!m) return -page*100;
-  const parts = m[1].split(",").map(x=>parseFloat(x.trim()));
-  const tx = parts[4] || 0; // px
-  return (tx / window.innerWidth) * 100;
-}
-
 btnBack.addEventListener("click", ()=>setPage(0,true));
 
-/* =========================
-   SWIPE (stable + snap)
-   ========================= */
-let startX=0, startY=0, dragging=false, lastDx=0, lockedAxis=null;
-
-function isInteractive(el){
-  return !!el.closest("button, a, input, textarea, select, label");
-}
-
+/* swipe */
+let startX=0,startY=0,dragging=false,lastDx=0,lockedAxis=null;
+function isInteractive(el){return !!el.closest("button,a,input,textarea,select,label")}
 function onStart(e){
-  const t = e.touches ? e.touches[0] : e;
+  const t=e.touches?e.touches[0]:e;
   if(page===1 && isInteractive(t.target)) return;
-
   startX=t.clientX; startY=t.clientY;
   dragging=true; lastDx=0; lockedAxis=null;
-
   if(track.getAnimations) track.getAnimations().forEach(a=>a.cancel());
   isAnimating=false;
 }
-
 function onMove(e){
   if(!dragging) return;
-  const t = e.touches ? e.touches[0] : e;
+  const t=e.touches?e.touches[0]:e;
   const dx=t.clientX-startX, dy=t.clientY-startY;
 
   if(!lockedAxis){
-    if(Math.abs(dx)>10 || Math.abs(dy)>10){
-      lockedAxis = (Math.abs(dx) > Math.abs(dy)) ? "x" : "y";
-    }else return;
+    if(Math.abs(dx)>10 || Math.abs(dy)>10) lockedAxis=(Math.abs(dx)>Math.abs(dy))?"x":"y";
+    else return;
   }
-
-  if(lockedAxis==="y"){
-    dragging=false;
-    return; // allow settings scroll
-  }
+  if(lockedAxis==="y"){ dragging=false; return; }
 
   lastDx=dx;
-
-  const base = -page*100;
-  const deltaPct = (dx / window.innerWidth) * 100;
-  let pos = base + deltaPct;
-
-  // rubber band
-  pos = Math.max(-100-10, Math.min(0+10, pos));
-  track.style.transform = `translateX(${pos}%)`;
-
+  const base=-page*100;
+  let pos = base + (dx/window.innerWidth)*100;
+  pos = Math.max(-110, Math.min(10, pos));
+  track.style.transform=`translateX(${pos}%)`;
   if(e.cancelable) e.preventDefault();
 }
-
 function onEnd(){
   if(!dragging) return;
   dragging=false;
-
-  const threshold = Math.max(70, window.innerWidth*0.15);
-
-  if(lastDx < -threshold) setPage(1,true);
-  else if(lastDx > threshold) setPage(0,true);
+  const threshold=Math.max(70, window.innerWidth*0.15);
+  if(lastDx<-threshold) setPage(1,true);
+  else if(lastDx>threshold) setPage(0,true);
   else setPage(page,true);
 }
+addEventListener("touchstart",onStart,{passive:true});
+addEventListener("touchmove",onMove,{passive:false});
+addEventListener("touchend",onEnd,{passive:true});
+addEventListener("mousedown",onStart);
+addEventListener("mousemove",onMove);
+addEventListener("mouseup",onEnd);
 
-document.addEventListener("touchstart", onStart, {passive:true});
-document.addEventListener("touchmove", onMove, {passive:false});
-document.addEventListener("touchend", onEnd, {passive:true});
-
-document.addEventListener("mousedown", onStart);
-document.addEventListener("mousemove", onMove);
-document.addEventListener("mouseup", onEnd);
-
-/* keyboard */
-document.addEventListener("keydown",(e)=>{
-  const k=e.key.toLowerCase();
-  if(e.code==="Space"){ e.preventDefault(); setPage(page===0?1:0,true); }
-  if(k==="arrowleft") setPage(0,true);
-  if(k==="arrowright") setPage(1,true);
-  if(k==="s"){ S.run ? pause() : start(); }
-  if(k==="r"){ reset(); }
-  if(k==="n"){ fire("manual"); }
-  if(k==="escape"){ overlay.classList.remove("show"); }
-});
-
-/* =========================
-   PREFS
-   ========================= */
+/* ===== prefs ===== */
 function applyPrefs(){
-  swSeconds.checked = !!S.prefs.showSeconds;
+  swSeconds.checked=!!S.prefs.showSeconds;
   swSecondsWrap.classList.toggle("on", swSeconds.checked);
 
-  rgScale.value = String(S.prefs.scale);
-  rgBright.value = String(S.prefs.bright);
-  rgGlow.value = String(S.prefs.glow);
+  rgScale.value=String(S.prefs.scale);
+  rgBright.value=String(S.prefs.bright);
+  rgGlow.value=String(S.prefs.glow);
 
-  valScale.textContent = Number(S.prefs.scale).toFixed(2);
-  valBright.textContent = Number(S.prefs.bright).toFixed(2);
-  valGlow.textContent = Number(S.prefs.glow).toFixed(2);
+  valScale.textContent=Number(S.prefs.scale).toFixed(2);
+  valBright.textContent=Number(S.prefs.bright).toFixed(2);
+  valGlow.textContent=Number(S.prefs.glow).toFixed(2);
 
   document.documentElement.style.setProperty("--clock-scale", String(S.prefs.scale));
   document.documentElement.style.setProperty("--clock-bright", String(S.prefs.bright));
@@ -744,10 +660,8 @@ function applyPrefs(){
   render();
 }
 
-/* =========================
-   TIMER + PROGRESS
-   ========================= */
-function fmtMM(s){ const m=Math.floor(s/60); return String(m).padStart(2,"0"); }
+/* ===== timer render ===== */
+function fmtMM(s){return String(Math.floor(s/60)).padStart(2,"0")}
 function fmtMMSS_plain(s){
   const m=Math.floor(s/60), x=s%60;
   return `${String(m).padStart(2,"0")}:${String(x).padStart(2,"0")}`;
@@ -756,51 +670,37 @@ function fmtMMSS_html(s){
   const m=Math.floor(s/60), x=s%60;
   return `${String(m).padStart(2,"0")}:<span class="sec">${String(x).padStart(2,"0")}</span>`;
 }
-
 function setProgress(){
-  const t = Math.max(1, S.total);
-  const ratio = Math.max(0, Math.min(1, 1 - (S.left / t)));
-  const off = ringLen * (1 - ratio);
-  pfg.style.strokeDashoffset = String(off);
-
-  // a bit brighter when running, dim when idle
-  const op = S.run ? .20 : (S.left!==S.total ? .16 : .10);
+  const ratio=Math.max(0,Math.min(1, 1-(S.left/Math.max(1,S.total))));
+  pfg.style.strokeDashoffset=String(ringLen*(1-ratio));
+  const op = S.run ? .16 : (S.left!==S.total ? .12 : .08);
   document.documentElement.style.setProperty("--prog-opacity", String(op));
 }
-
 function render(){
-  // centered clock text (always)
-  if(S.prefs.showSeconds) clockTime.innerHTML = fmtMMSS_html(S.left);
-  else clockTime.textContent = fmtMM(S.left);
+  if(S.prefs.showSeconds) clockTime.innerHTML=fmtMMSS_html(S.left);
+  else clockTime.textContent=fmtMM(S.left);
 
-  if(S.run) statusBadge.textContent="В работе";
-  else if(S.left!==S.total) statusBadge.textContent="Пауза";
-  else statusBadge.textContent="Ожидание";
+  statusBadge.textContent = S.run ? "В работе" : (S.left!==S.total ? "Пауза" : "Ожидание");
 
-  stToday.textContent = String(S.stats.today||0);
-  stStreak.textContent = String(S.stats.streak||0);
-  stPush.textContent = String(S.stats.push||0);
+  stToday.textContent=String(S.stats.today||0);
+  stStreak.textContent=String(S.stats.streak||0);
+  stPush.textContent=String(S.stats.push||0);
 
   setProgress();
-  document.title = (S.run ? fmtMMSS_plain(S.left)+" · " : "") + "FitPush";
+  document.title=(S.run?fmtMMSS_plain(S.left)+" · ":"")+"FitPush";
 }
 
 function pick(min){
   S.min=min; S.total=min*60; S.left=S.total; S.end=null;
-  if(S.id){ clearInterval(S.id); S.id=null; }
+  if(S.id){clearInterval(S.id); S.id=null}
   S.run=false;
-
-  presetGrid.querySelectorAll(".preset").forEach(b=>{
-    b.classList.toggle("active", Number(b.dataset.min)===min);
-  });
+  presetGrid.querySelectorAll(".preset").forEach(b=>b.classList.toggle("active", Number(b.dataset.min)===min));
   render();
 }
-
 function start(){
   if(S.run) return;
   S.run=true;
   S.end=Date.now()+S.left*1000;
-
   S.id=setInterval(()=>{
     S.left=Math.max(0, Math.round((S.end-Date.now())/1000));
     render();
@@ -810,26 +710,12 @@ function start(){
       fire("timer");
     }
   },250);
-
   render();
 }
+function pause(){ if(!S.run) return; S.run=false; if(S.id){clearInterval(S.id); S.id=null} render(); }
+function reset(){ pause(); S.left=S.total; render(); }
 
-function pause(){
-  if(!S.run) return;
-  S.run=false;
-  if(S.id){ clearInterval(S.id); S.id=null; }
-  render();
-}
-
-function reset(){
-  pause();
-  S.left=S.total;
-  render();
-}
-
-/* =========================
-   REMINDER
-   ========================= */
+/* reminder */
 function fire(src){
   S.cur=EX[Math.floor(Math.random()*EX.length)];
   mTitle.textContent=S.cur.n;
@@ -838,28 +724,18 @@ function fire(src){
   overlay.classList.add("show");
   sound(); vib(); notify(S.cur.n+" - "+S.cur.d);
 }
-
 function doneAction(){
   if(!S.cur) return;
-  S.stats.today += 1;
-  if(S.cur.p) S.stats.push += (S.cur.p||0);
-  S.stats.last = day();
-  saveStats();
-
-  S.cur=null;
-  overlay.classList.remove("show");
+  S.stats.today+=1;
+  if(S.cur.p) S.stats.push+=(S.cur.p||0);
+  S.stats.last=day(); saveStats();
+  S.cur=null; overlay.classList.remove("show");
   reset(); start();
 }
-function skipAction(){ S.cur=null; overlay.classList.remove("show"); reset(); start(); }
-function snoozeAction(){
-  S.cur=null; overlay.classList.remove("show");
-  S.left=300; S.total=Math.max(S.total,300);
-  start();
-}
+function skipAction(){S.cur=null; overlay.classList.remove("show"); reset(); start();}
+function snoozeAction(){S.cur=null; overlay.classList.remove("show"); S.left=300; S.total=Math.max(S.total,300); start();}
 
-/* =========================
-   NOTIFS
-   ========================= */
+/* notif */
 function sound(){
   try{
     const c=new(window.AudioContext||window.webkitAudioContext)(),t=c.currentTime;
@@ -873,30 +749,19 @@ function sound(){
     });
   }catch(_){}
 }
-function vib(){ try{ if("vibrate" in navigator) navigator.vibrate([140,80,140]); }catch(_){} }
-
-function toast(msg){
-  toastEl.textContent=msg;
-  toastEl.classList.add("show");
-  setTimeout(()=>toastEl.classList.remove("show"),2200);
-}
-
+function vib(){try{if("vibrate" in navigator) navigator.vibrate([140,80,140])}catch(_){}}
+function toast(msg){toastEl.textContent=msg; toastEl.classList.add("show"); setTimeout(()=>toastEl.classList.remove("show"),2200)}
 function askNotif(){
-  if(!("Notification" in window)) { toast("No Notification API"); return; }
-  if(IS_IOS && !IS_STANDALONE){
-    alert("На iPhone уведомления стабильнее в режиме PWA: добавь на экран Домой.");
-    return;
-  }
-  if(Notification.permission==="default"){
-    Notification.requestPermission().finally(updateNotifBtn);
-  }else updateNotifBtn();
+  if(!("Notification" in window)){toast("No Notification API"); return;}
+  if(IS_IOS && !IS_STANDALONE){alert("На iPhone уведомления стабильнее в режиме PWA: добавь на экран Домой."); return;}
+  if(Notification.permission==="default") Notification.requestPermission().finally(updateNotifBtn);
+  else updateNotifBtn();
 }
 function updateNotifBtn(){
-  if(!("Notification" in window)){ btnNotif.textContent="Not supported"; btnNotif.disabled=true; return; }
-  if(IS_IOS && !IS_STANDALONE){ btnNotif.textContent="Use PWA (iOS)"; return; }
-  if(Notification.permission==="granted") btnNotif.textContent="Enabled";
-  else if(Notification.permission==="denied") btnNotif.textContent="Blocked";
-  else btnNotif.textContent="Enable";
+  if(!("Notification" in window)){btnNotif.textContent="Not supported"; btnNotif.disabled=true; return;}
+  if(IS_IOS && !IS_STANDALONE){btnNotif.textContent="Use PWA (iOS)"; return;}
+  btnNotif.textContent = (Notification.permission==="granted") ? "Enabled" :
+                         (Notification.permission==="denied") ? "Blocked" : "Enable";
 }
 function notify(body){
   if("Notification" in window && Notification.permission==="granted"){
@@ -904,59 +769,27 @@ function notify(body){
   }
 }
 
-/* =========================
-   EVENTS
-   ========================= */
-presetGrid.addEventListener("click",(e)=>{
-  const b=e.target.closest(".preset");
-  if(!b) return;
-  pick(Number(b.dataset.min));
-});
+/* events */
+presetGrid.addEventListener("click",(e)=>{const b=e.target.closest(".preset"); if(!b) return; pick(Number(b.dataset.min));});
+btnStart.addEventListener("click",start);
+btnPause.addEventListener("click",pause);
+btnReset.addEventListener("click",reset);
+btnNow.addEventListener("click",()=>fire("manual"));
+btnNotif.addEventListener("click",askNotif);
 
-btnStart.addEventListener("click", start);
-btnPause.addEventListener("click", pause);
-btnReset.addEventListener("click", reset);
-btnNow.addEventListener("click", ()=>fire("manual"));
-btnBack.addEventListener("click", ()=>setPage(0,true));
+done.addEventListener("click",doneAction);
+skip.addEventListener("click",skipAction);
+snooze.addEventListener("click",snoozeAction);
 
-btnNotif.addEventListener("click", askNotif);
+swSeconds.addEventListener("change",()=>{S.prefs.showSeconds=swSeconds.checked; swSecondsWrap.classList.toggle("on", swSeconds.checked); savePrefs(); render();});
+rgScale.addEventListener("input",()=>{S.prefs.scale=Number(rgScale.value); valScale.textContent=S.prefs.scale.toFixed(2); document.documentElement.style.setProperty("--clock-scale", String(S.prefs.scale)); savePrefs();});
+rgScale.addEventListener("change",render);
+rgBright.addEventListener("input",()=>{S.prefs.bright=Number(rgBright.value); valBright.textContent=S.prefs.bright.toFixed(2); document.documentElement.style.setProperty("--clock-bright", String(S.prefs.bright)); savePrefs();});
+rgBright.addEventListener("change",render);
+rgGlow.addEventListener("input",()=>{S.prefs.glow=Number(rgGlow.value); valGlow.textContent=S.prefs.glow.toFixed(2); document.documentElement.style.setProperty("--clock-glow", String(S.prefs.glow)); savePrefs();});
+rgGlow.addEventListener("change",render);
 
-done.addEventListener("click", doneAction);
-skip.addEventListener("click", skipAction);
-snooze.addEventListener("click", snoozeAction);
-
-swSeconds.addEventListener("change", ()=>{
-  S.prefs.showSeconds = swSeconds.checked;
-  swSecondsWrap.classList.toggle("on", swSeconds.checked);
-  savePrefs(); render();
-});
-
-rgScale.addEventListener("input", ()=>{
-  S.prefs.scale = Number(rgScale.value);
-  valScale.textContent = S.prefs.scale.toFixed(2);
-  document.documentElement.style.setProperty("--clock-scale", String(S.prefs.scale));
-  savePrefs();
-});
-rgScale.addEventListener("change", render);
-
-rgBright.addEventListener("input", ()=>{
-  S.prefs.bright = Number(rgBright.value);
-  valBright.textContent = S.prefs.bright.toFixed(2);
-  document.documentElement.style.setProperty("--clock-bright", String(S.prefs.bright));
-  savePrefs();
-});
-rgBright.addEventListener("change", render);
-
-rgGlow.addEventListener("input", ()=>{
-  S.prefs.glow = Number(rgGlow.value);
-  valGlow.textContent = S.prefs.glow.toFixed(2);
-  document.documentElement.style.setProperty("--clock-glow", String(S.prefs.glow));
-  savePrefs();
-});
-rgGlow.addEventListener("change", render);
-
-/* keep timer correct after tab switch */
-document.addEventListener("visibilitychange", ()=>{
+document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState==="visible" && S.run && S.end){
     S.left=Math.max(0, Math.round((S.end-Date.now())/1000));
     if(S.left<=0){
@@ -967,9 +800,7 @@ document.addEventListener("visibilitychange", ()=>{
   }
 });
 
-/* =========================
-   INIT
-   ========================= */
+/* init */
 loadStats();
 loadPrefs();
 applyPrefs();
