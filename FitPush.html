@@ -55,7 +55,7 @@ body{
   touch-action: manipulation;
 }
 
-/* Background (always behind, never catches taps) */
+/* Background */
 .viewport::before,
 .viewport::after{
   content:"";
@@ -78,7 +78,7 @@ body{
   transform:rotate(12deg);
 }
 
-/* subtle progress ring (premium, almost invisible) */
+/* subtle progress frame */
 .prog{
   position:absolute;
   inset:
@@ -98,7 +98,6 @@ body{
 .center{
   position:absolute; inset:0;
   display:grid; place-items:center;
-  /* smaller padding -> allows "full screen clock" */
   padding:
     calc(12px + var(--safe-top))
     10px
@@ -123,7 +122,6 @@ body{
   text-shadow:
     0 0 calc(18px * var(--clock-glow)) rgba(255,255,255,.18),
     0 0 calc(60px * var(--clock-glow)) rgba(255,255,255,.08);
-  /* IMPORTANT: allow very large clock */
   font-size: clamp(4.6rem, 18vw, 16.0rem);
 }
 .clock .sec{
@@ -184,7 +182,7 @@ body{
   z-index:2;
 }
 
-/* Bottom grab zone (swipe up) */
+/* Bottom grab zone */
 .grabzone{
   position:absolute;
   left:0; right:0;
@@ -222,8 +220,6 @@ body{
   position:absolute;
   left:0; right:0;
   bottom:0;
-
-  /* snap animation like iOS */
   transform: translateY(110%);
   will-change: transform;
   transition: transform 520ms cubic-bezier(.2, 1.25, .28, 1);
@@ -240,10 +236,10 @@ body{
   backdrop-filter: blur(16px);
   box-shadow: 0 40px 80px rgba(0,0,0,.55);
   overflow:hidden;
-
-  /* FIX: do not cut bottom, make body scroll */
   display:flex;
   flex-direction:column;
+
+  /* full safe viewport height */
   max-height: calc(100dvh - 18px - var(--safe-top));
 }
 .sheet-top{
@@ -265,12 +261,14 @@ body{
   margin: 6px auto 0;
 }
 .sheet-body{
-  /* FIX: make scrollable area truly fill */
   flex:1;
   overflow:auto;
   -webkit-overflow-scrolling: touch;
   padding: 10px 14px 14px;
   overscroll-behavior: contain;
+
+  /* IMPORTANT: allow native scrolling */
+  touch-action: pan-y;
 }
 
 .group{
@@ -320,7 +318,7 @@ body{
 input[type="range"]{
   width:220px;
   accent-color:#fff;
-  touch-action: pan-x; /* IMPORTANT: allow slider dragging */
+  touch-action: pan-x;
 }
 .val{
   font-variant-numeric: tabular-nums;
@@ -433,7 +431,6 @@ kbd{
 
   <div class="hint">Tap: start/pause • Double tap: reset • Swipe up from bottom: settings</div>
 
-  <!-- swipe-up zone -->
   <div class="grabzone" id="grabzone" aria-label="Swipe up to open settings">
     <div class="grab-pill"></div>
   </div>
@@ -654,8 +651,8 @@ addEventListener("orientationchange", ()=>setTimeout(setVh, 80));
 })();
 
 /* ========= state ========= */
-const KEY_STATS="fitpush_stats_final_v1";
-const KEY_PREFS="fitpush_prefs_final_v1";
+const KEY_STATS="fitpush_stats_final_v2";
+const KEY_PREFS="fitpush_prefs_final_v2";
 const KEY_A2HS="fitpush_a2hs_hide_v1";
 
 const IS_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -766,12 +763,14 @@ function openSheet(){
 function closeSheet(){
   sheetOverlay.classList.remove("show");
   sheetOverlay.setAttribute("aria-hidden","true");
+  // reset any dragged state
+  sheet.style.transform="";
 }
 btnSettings.addEventListener("click", openSheet, {passive:true});
 btnCloseSheet.addEventListener("click", closeSheet, {passive:true});
 sheetOverlay.addEventListener("click", (e)=>{ if(e.target===sheetOverlay) closeSheet(); });
 
-/* ========= swipe UP from bottom to open (NO global touchmove!) ========= */
+/* ========= swipe UP from bottom to open (NO global listeners) ========= */
 let upStartY=0, upStartX=0, upTracking=false;
 
 function swipeUpStart(e){
@@ -788,10 +787,8 @@ function swipeUpMove(e){
   const dy = t.clientY - upStartY;
   const dx = t.clientX - upStartX;
 
-  // ignore sideways
   if(Math.abs(dx) > 24 && Math.abs(dx) > Math.abs(dy)) { upTracking=false; return; }
 
-  // open on strong upward gesture
   if(dy < -70){
     upTracking=false;
     openSheet();
@@ -804,11 +801,11 @@ grabzone.addEventListener("touchstart", swipeUpStart, {passive:true});
 grabzone.addEventListener("touchmove", swipeUpMove, {passive:false});
 grabzone.addEventListener("touchend", swipeUpEnd, {passive:true});
 
-/* ========= drag down to close (only if sheet-body at top) ========= */
+/* ========= drag down to close (does NOT kill scroll) ========= */
 let dragStartY=0, dragging=false;
 
 function sheetStart(e){
-  // do not interfere with sliders
+  // don't interfere with sliders
   if(e.target && e.target.closest && e.target.closest('input[type="range"]')) return;
 
   const t=e.touches?e.touches[0]:e;
@@ -816,33 +813,56 @@ function sheetStart(e){
   dragging=true;
   sheet.style.transition="none";
 }
+
 function sheetMove(e){
   if(!dragging) return;
 
-  // do not interfere with sliders
+  // don't interfere with sliders
   if(e.target && e.target.closest && e.target.closest('input[type="range"]')) return;
 
   const t=e.touches?e.touches[0]:e;
-  const dy=Math.max(0, t.clientY - dragStartY);
-  const pct = Math.min(1, dy / Math.max(1, window.innerHeight*0.45));
+  const dy = t.clientY - dragStartY;
+
+  // only if pulling DOWN
+  if(dy <= 0) return;
+
+  // only if sheet body is at top (otherwise user is scrolling)
+  if(sheetBody.scrollTop > 0) return;
+
+  const pct = Math.min(1, dy / (window.innerHeight * 0.45));
   sheet.style.transform = `translateY(${pct*80}%)`;
 
   if(e.cancelable) e.preventDefault();
 }
+
 function sheetEnd(){
   if(!dragging) return;
   dragging=false;
   sheet.style.transition="";
+
   const m = sheet.style.transform.match(/translateY\(([\d.]+)%\)/);
   const pct = m ? (parseFloat(m[1]) / 80) : 0;
+
   sheet.style.transform = "";
+
   if(pct>0.35) closeSheet();
 }
-sheetBody.addEventListener("touchstart",(e)=>{ if(sheetBody.scrollTop===0) sheetStart(e); },{passive:true});
-sheetBody.addEventListener("touchmove",(e)=>{ if(sheetBody.scrollTop===0) sheetMove(e); },{passive:false});
+
+/* IMPORTANT: attach move listener to sheetBody but only for "close gesture"
+   and do NOT block scroll unless we are actually pulling down at top.
+*/
+sheetBody.addEventListener("touchstart",(e)=>{ sheetStart(e); },{passive:true});
+sheetBody.addEventListener("touchmove",(e)=>{ sheetMove(e); },{passive:false});
 sheetBody.addEventListener("touchend",sheetEnd,{passive:true});
+sheetBody.addEventListener("touchcancel",sheetEnd,{passive:true});
 
 /* ========= prefs ========= */
+function updateFocusUI(){
+  const huge = S.prefs.scale >= 1.65;
+  const dim = (S.prefs.focus && huge) ? 0.35 : 1;
+  document.documentElement.style.setProperty("--ui-dim", String(dim));
+}
+
 function applyPrefs(){
   swSeconds.checked=!!S.prefs.showSeconds;
   swSecondsWrap.classList.toggle("on", swSeconds.checked);
@@ -865,13 +885,6 @@ function applyPrefs(){
   updateFocusUI();
   savePrefs();
   render();
-}
-
-function updateFocusUI(){
-  // if focus enabled and clock is huge, dim UI a bit
-  const huge = S.prefs.scale >= 1.65;
-  const dim = (S.prefs.focus && huge) ? 0.35 : 1;
-  document.documentElement.style.setProperty("--ui-dim", String(dim));
 }
 
 function setProgress(){
