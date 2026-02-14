@@ -51,9 +51,10 @@ body{
   overflow:hidden;
   background:#000;
   z-index:0;
+  touch-action: manipulation;
 }
 
-/* Background texture (forced behind everything, never catches taps) */
+/* Background (always behind, never catches taps) */
 .viewport::before,
 .viewport::after{
   content:"";
@@ -76,7 +77,7 @@ body{
   transform:rotate(12deg);
 }
 
-/* ultra subtle progress ring inside safe areas */
+/* progress ring */
 .prog{
   position:absolute;
   inset:
@@ -104,7 +105,7 @@ body{
   z-index:2;
 }
 
-/* Clock text */
+/* Clock */
 .clock{
   display:inline-block;
   transform: translate3d(0,0,0) scale(var(--clock-scale));
@@ -129,14 +130,14 @@ body{
   letter-spacing:.10em;
 }
 
-/* Top bar (clickable!) */
+/* Top bar (still works as fallback) */
 .topbar{
   position:absolute;
   top:0; left:0; right:0;
   padding: calc(10px + var(--safe-top)) 12px 10px;
   display:flex; align-items:center; justify-content:space-between;
   z-index:5;
-  pointer-events:auto; /* FIX: must be clickable */
+  pointer-events:auto;
 }
 .pill{
   font-size:.78rem;
@@ -166,7 +167,6 @@ body{
   border-radius:999px;
 }
 
-/* Bottom hint */
 .hint{
   position:absolute;
   left:50%;
@@ -179,7 +179,31 @@ body{
   z-index:2;
 }
 
-/* Settings sheet overlay (must be above everything) */
+/* Bottom "grab zone" for swipe-up */
+.grabzone{
+  position:absolute;
+  left:0; right:0;
+  bottom:0;
+  height: 72px;
+  padding-bottom: var(--safe-bot);
+  z-index:6;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  pointer-events:auto;
+  -webkit-tap-highlight-color: transparent;
+}
+.grab-pill{
+  width:64px;
+  height:6px;
+  border-radius:999px;
+  background: rgba(255,255,255,.22);
+  opacity:.55;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,.45));
+}
+
+/* Settings sheet overlay */
 .sheet-overlay{
   position:fixed; inset:0;
   display:none;
@@ -282,7 +306,7 @@ body{
 input[type="range"]{width:220px; accent-color:#fff;}
 .val{
   font-variant-numeric: tabular-nums;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   color:rgba(255,255,255,.72);
   font-size:.86rem;
   width:46px;
@@ -389,12 +413,18 @@ kbd{
     <div id="clockTime" class="clock">60:00</div>
   </div>
 
-  <div class="hint">Tap: start/pause • Double tap: reset • ⚙︎ settings</div>
+  <div class="hint">Tap: start/pause • Double tap: reset • Swipe up from bottom: settings</div>
+
+  <!-- swipe-up zone -->
+  <div class="grabzone" id="grabzone" aria-hidden="true">
+    <div class="grab-pill"></div>
+  </div>
+
 </div>
 
 <!-- Settings sheet -->
 <div class="sheet-overlay" id="sheetOverlay" aria-hidden="true">
-  <div class="sheet" role="dialog" aria-modal="true" aria-label="Settings sheet">
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Settings sheet">
     <div class="sheet-card">
       <div class="sheet-top">
         <div style="flex:1">
@@ -592,8 +622,8 @@ addEventListener("orientationchange", ()=>setTimeout(setVh, 80));
 })();
 
 /* ========= state ========= */
-const KEY_STATS="fitpush_stats_v7";
-const KEY_PREFS="fitpush_prefs_v7";
+const KEY_STATS="fitpush_stats_v8";
+const KEY_PREFS="fitpush_prefs_v8";
 const KEY_A2HS="fitpush_a2hs_hide_v1";
 
 const IS_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -638,9 +668,12 @@ const clockTime=document.getElementById("clockTime");
 const tapArea=document.getElementById("tapArea");
 
 const sheetOverlay=document.getElementById("sheetOverlay");
+const sheet=document.getElementById("sheet");
 const btnSettings=document.getElementById("btnSettings");
 const btnCloseSheet=document.getElementById("btnCloseSheet");
 const sheetBody=document.getElementById("sheetBody");
+
+const grabzone=document.getElementById("grabzone");
 
 const presetGrid=document.getElementById("presetGrid");
 const btnStart=document.getElementById("btnStart");
@@ -698,9 +731,55 @@ btnSettings.addEventListener("click", openSheet, {passive:true});
 btnCloseSheet.addEventListener("click", closeSheet, {passive:true});
 sheetOverlay.addEventListener("click", (e)=>{ if(e.target===sheetOverlay) closeSheet(); });
 
+/* ========= swipe UP from bottom to open =========
+   We listen on grabzone (bottom area) + whole viewport fallback.
+*/
+let upStartY=0, upStartX=0, upTracking=false;
+
+function swipeUpStart(e){
+  if(sheetOverlay.classList.contains("show")) return;
+  const t=e.touches ? e.touches[0] : e;
+  upStartY=t.clientY;
+  upStartX=t.clientX;
+  upTracking=true;
+}
+function swipeUpMove(e){
+  if(!upTracking) return;
+  const t=e.touches ? e.touches[0] : e;
+  const dy = t.clientY - upStartY;
+  const dx = t.clientX - upStartX;
+
+  // If user moves mostly sideways -> ignore
+  if(Math.abs(dx) > 24 && Math.abs(dx) > Math.abs(dy)) { upTracking=false; return; }
+
+  // Swipe up => dy negative
+  if(dy < -70) {
+    upTracking=false;
+    openSheet();
+    // prevent page scroll "rubber band"
+    if(e.cancelable) e.preventDefault();
+  }
+}
+function swipeUpEnd(){ upTracking=false; }
+
+grabzone.addEventListener("touchstart", swipeUpStart, {passive:true});
+grabzone.addEventListener("touchmove", swipeUpMove, {passive:false});
+grabzone.addEventListener("touchend", swipeUpEnd, {passive:true});
+
+/* Also allow swipe-up anywhere near bottom 25% */
+document.addEventListener("touchstart",(e)=>{
+  if(sheetOverlay.classList.contains("show")) return;
+  const t=e.touches[0];
+  if(t.clientY > window.innerHeight*0.75) swipeUpStart(e);
+},{passive:true});
+document.addEventListener("touchmove",(e)=>{
+  if(sheetOverlay.classList.contains("show")) return;
+  swipeUpMove(e);
+},{passive:false});
+document.addEventListener("touchend", swipeUpEnd, {passive:true});
+
 /* drag-to-close (only when settings scrolled to top) */
 let dragStartY=0, dragging=false;
-const sheet = sheetOverlay.querySelector(".sheet");
 
 function sheetStart(e){
   const t=e.touches?e.touches[0]:e;
@@ -809,7 +888,7 @@ function reset(){ pause(); S.left=S.total; render(); }
 let lastTap=0;
 tapArea.addEventListener("click", ()=>{
   const now=Date.now();
-  if(now-lastTap<260) reset();   // double tap
+  if(now-lastTap<260) reset();
   else (S.run ? pause() : start());
   lastTap=now;
 });
@@ -850,7 +929,10 @@ function vib(){try{if("vibrate" in navigator) navigator.vibrate([140,80,140])}ca
 function toast(msg){toastEl.textContent=msg; toastEl.classList.add("show"); setTimeout(()=>toastEl.classList.remove("show"),2200)}
 function askNotif(){
   if(!("Notification" in window)){toast("No Notification API"); return;}
-  if(IS_IOS && !IS_STANDALONE){alert("На iPhone уведомления стабильнее в режиме PWA: добавь на экран Домой."); return;}
+  if(matchMedia("(display-mode: standalone)").matches===false && /iPad|iPhone|iPod/.test(navigator.userAgent)){
+    alert("На iPhone уведомления стабильнее в режиме PWA: добавь на экран Домой.");
+    return;
+  }
   if(Notification.permission==="default") Notification.requestPermission().finally(updateNotifBtn);
   else updateNotifBtn();
 }
@@ -866,7 +948,7 @@ function notify(body){
   }
 }
 
-/* ========= A2HS helper (iOS) ========= */
+/* A2HS helper */
 function shouldShowA2HS(){
   if(!IS_IOS) return false;
   if(IS_STANDALONE) return false;
@@ -882,7 +964,7 @@ a2hsDont.addEventListener("click", ()=>{
   closeA2HS();
 });
 
-/* ========= events ========= */
+/* events */
 presetGrid.addEventListener("click",(e)=>{const b=e.target.closest(".preset"); if(!b) return; pick(Number(b.dataset.min));});
 btnStart.addEventListener("click",start);
 btnPause.addEventListener("click",pause);
