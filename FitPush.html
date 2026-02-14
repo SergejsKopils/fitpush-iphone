@@ -21,9 +21,9 @@
   --text:#fff;
 
   /* prefs */
-  --clock-scale:1.00;     /* 0.80..1.25 */
-  --clock-bright:1.00;    /* 0.50..1.40 */
-  --clock-glow:0.90;      /* 0.00..1.60 */
+  --clock-scale:1.00;
+  --clock-bright:1.00;
+  --clock-glow:0.90;
   --prog-opacity:.12;
 
   /* iOS safe */
@@ -50,25 +50,30 @@ body{
   height:calc(var(--vh) * 100);
   overflow:hidden;
   background:#000;
+  z-index:0;
 }
 
-/* Background texture */
-.viewport::before{
+/* Background texture (forced behind everything, never catches taps) */
+.viewport::before,
+.viewport::after{
   content:"";
-  position:absolute; inset:-30%;
+  position:absolute;
+  pointer-events:none;
+  z-index:0;
+}
+.viewport::before{
+  inset:-30%;
   background:
     radial-gradient(circle at 50% 48%, rgba(255,255,255,.05) 0%, rgba(0,0,0,0) 34%),
     radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,.95) 62%),
     linear-gradient(180deg, rgba(255,255,255,.02), transparent 40%, rgba(255,255,255,.01));
-  opacity:.95; pointer-events:none;
+  opacity:.95;
 }
 .viewport::after{
-  content:"";
-  position:absolute; inset:-40%;
+  inset:-40%;
   opacity:.06;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
   transform:rotate(12deg);
-  pointer-events:none;
 }
 
 /* ultra subtle progress ring inside safe areas */
@@ -82,6 +87,7 @@ body{
   pointer-events:none;
   opacity: var(--prog-opacity);
   filter: drop-shadow(0 0 10px rgba(255,255,255,.04));
+  z-index:1;
 }
 .prog svg{width:100%; height:100%}
 .prog .bg{fill:none; stroke:rgba(255,255,255,.07); stroke-width:2.2;}
@@ -95,6 +101,7 @@ body{
     18px
     calc(18px + var(--safe-bot))
     18px;
+  z-index:2;
 }
 
 /* Clock text */
@@ -122,16 +129,16 @@ body{
   letter-spacing:.10em;
 }
 
-/* Top bar (minimal) */
+/* Top bar (clickable!) */
 .topbar{
   position:absolute;
   top:0; left:0; right:0;
   padding: calc(10px + var(--safe-top)) 12px 10px;
   display:flex; align-items:center; justify-content:space-between;
-  pointer-events:none;
+  z-index:5;
+  pointer-events:auto; /* FIX: must be clickable */
 }
 .pill{
-  pointer-events:auto;
   font-size:.78rem;
   padding:7px 10px;
   border:1px solid rgba(255,255,255,.10);
@@ -141,7 +148,6 @@ body{
   backdrop-filter: blur(10px);
 }
 .iconbtn{
-  pointer-events:auto;
   width:40px; height:36px;
   display:grid; place-items:center;
   border-radius:14px;
@@ -149,6 +155,7 @@ body{
   background:rgba(255,255,255,.03);
   backdrop-filter: blur(10px);
   cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 .iconbtn:active{transform:translateY(1px)}
 .gear{
@@ -159,7 +166,7 @@ body{
   border-radius:999px;
 }
 
-/* Bottom hint (optional, very subtle) */
+/* Bottom hint */
 .hint{
   position:absolute;
   left:50%;
@@ -169,9 +176,10 @@ body{
   color: rgba(255,255,255,.45);
   opacity:.55;
   pointer-events:none;
+  z-index:2;
 }
 
-/* Settings sheet */
+/* Settings sheet overlay (must be above everything) */
 .sheet-overlay{
   position:fixed; inset:0;
   display:none;
@@ -218,7 +226,7 @@ body{
   border-radius:999px;
   background: rgba(255,255,255,.20);
   opacity:.55;
-  margin: 2px auto 0;
+  margin: 6px auto 0;
 }
 .sheet-body{
   max-height: min(62vh, 520px);
@@ -226,6 +234,7 @@ body{
   -webkit-overflow-scrolling: touch;
   padding: 10px 14px 14px;
 }
+
 .group{
   border:1px solid rgba(255,255,255,.10);
   background: rgba(0,0,0,.20);
@@ -250,7 +259,6 @@ body{
 .label{display:flex; flex-direction:column; gap:4px; min-width:0;}
 .label .main{font-size:.95rem; color:rgba(255,255,255,.92);}
 .label .sub{font-size:.80rem; color:rgba(255,255,255,.55); line-height:1.25;}
-
 .controls{display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;}
 
 .switch{
@@ -258,6 +266,7 @@ body{
   border:1px solid rgba(255,255,255,.14);
   background:rgba(255,255,255,.06);
   cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 .switch input{display:none}
 .switch .knob{
@@ -287,6 +296,7 @@ input[type="range"]{width:220px; accent-color:#fff;}
   padding:10px 12px;
   border-radius:14px;
   cursor:pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 .btn:active{transform:translateY(1px)}
 .btn.primary{background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.22)}
@@ -300,6 +310,7 @@ input[type="range"]{width:220px; accent-color:#fff;}
   border-radius:14px;
   cursor:pointer;
   text-align:center;
+  -webkit-tap-highlight-color: transparent;
 }
 .preset.active{background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.22)}
 
@@ -311,6 +322,8 @@ input[type="range"]{width:220px; accent-color:#fff;}
 .modal p{margin:4px 0;color:rgba(255,255,255,.86)}
 .modal .hint{font-size:.92rem;color:rgba(255,255,255,.55)}
 .modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+/* Toast */
 .toast{position:fixed; left:50%; bottom:calc(18px + var(--safe-bot)); transform:translateX(-50%); padding:10px 12px; border-radius:999px; border:1px solid rgba(255,255,255,.14); background:rgba(0,0,0,.75); color:rgba(255,255,255,.90); font-size:.84rem; display:none; z-index:50;}
 .toast.show{display:block}
 
@@ -384,7 +397,7 @@ kbd{
   <div class="sheet" role="dialog" aria-modal="true" aria-label="Settings sheet">
     <div class="sheet-card">
       <div class="sheet-top">
-        <div>
+        <div style="flex:1">
           <div class="sheet-title">Settings</div>
           <div class="grabber" aria-hidden="true"></div>
         </div>
@@ -672,7 +685,7 @@ const ringLen=pfg.getTotalLength();
 pfg.style.strokeDasharray=String(ringLen);
 pfg.style.strokeDashoffset=String(ringLen);
 
-/* ========= sheet open/close (with spring-ish feel via CSS easing) ========= */
+/* ========= sheet open/close ========= */
 function openSheet(){
   sheetOverlay.classList.add("show");
   sheetOverlay.setAttribute("aria-hidden","false");
@@ -681,20 +694,21 @@ function closeSheet(){
   sheetOverlay.classList.remove("show");
   sheetOverlay.setAttribute("aria-hidden","true");
 }
-btnSettings.addEventListener("click", openSheet);
-btnCloseSheet.addEventListener("click", closeSheet);
+btnSettings.addEventListener("click", openSheet, {passive:true});
+btnCloseSheet.addEventListener("click", closeSheet, {passive:true});
 sheetOverlay.addEventListener("click", (e)=>{ if(e.target===sheetOverlay) closeSheet(); });
 
-/* drag-to-close sheet */
+/* drag-to-close (only when settings scrolled to top) */
 let dragStartY=0, dragging=false;
 const sheet = sheetOverlay.querySelector(".sheet");
-function onSheetStart(e){
+
+function sheetStart(e){
   const t=e.touches?e.touches[0]:e;
   dragStartY=t.clientY;
   dragging=true;
   sheet.style.transition="none";
 }
-function onSheetMove(e){
+function sheetMove(e){
   if(!dragging) return;
   const t=e.touches?e.touches[0]:e;
   const dy=Math.max(0, t.clientY - dragStartY);
@@ -702,7 +716,7 @@ function onSheetMove(e){
   sheet.style.transform = `translateY(${pct*80}%)`;
   if(e.cancelable) e.preventDefault();
 }
-function onSheetEnd(){
+function sheetEnd(){
   if(!dragging) return;
   dragging=false;
   sheet.style.transition="";
@@ -711,9 +725,9 @@ function onSheetEnd(){
   sheet.style.transform = "";
   if(pct>0.35) closeSheet();
 }
-sheetBody.addEventListener("touchstart",(e)=>{ if(sheetBody.scrollTop===0) onSheetStart(e); },{passive:true});
-sheetBody.addEventListener("touchmove",(e)=>{ if(sheetBody.scrollTop===0) onSheetMove(e); },{passive:false});
-sheetBody.addEventListener("touchend",onSheetEnd,{passive:true});
+sheetBody.addEventListener("touchstart",(e)=>{ if(sheetBody.scrollTop===0) sheetStart(e); },{passive:true});
+sheetBody.addEventListener("touchmove",(e)=>{ if(sheetBody.scrollTop===0) sheetMove(e); },{passive:false});
+sheetBody.addEventListener("touchend",sheetEnd,{passive:true});
 
 /* ========= prefs ========= */
 function applyPrefs(){
@@ -795,11 +809,8 @@ function reset(){ pause(); S.left=S.total; render(); }
 let lastTap=0;
 tapArea.addEventListener("click", ()=>{
   const now=Date.now();
-  if(now-lastTap<260){ // double tap
-    reset();
-  } else {
-    S.run ? pause() : start();
-  }
+  if(now-lastTap<260) reset();   // double tap
+  else (S.run ? pause() : start());
   lastTap=now;
 });
 
@@ -883,14 +894,37 @@ done.addEventListener("click",doneAction);
 skip.addEventListener("click",()=>{S.cur=null; overlay.classList.remove("show"); reset(); start();});
 snooze.addEventListener("click",()=>{S.cur=null; overlay.classList.remove("show"); S.left=300; S.total=Math.max(S.total,300); start();});
 
-swSeconds.addEventListener("change",()=>{S.prefs.showSeconds=swSeconds.checked; swSecondsWrap.classList.toggle("on", swSeconds.checked); savePrefs(); render();});
-rgScale.addEventListener("input",()=>{S.prefs.scale=Number(rgScale.value); valScale.textContent=S.prefs.scale.toFixed(2); document.documentElement.style.setProperty("--clock-scale", String(S.prefs.scale)); savePrefs();});
+/* switches/ranges */
+swSeconds.addEventListener("change",()=>{
+  S.prefs.showSeconds=swSeconds.checked;
+  swSecondsWrap.classList.toggle("on", swSeconds.checked);
+  savePrefs(); render();
+});
+rgScale.addEventListener("input",()=>{
+  S.prefs.scale=Number(rgScale.value);
+  valScale.textContent=S.prefs.scale.toFixed(2);
+  document.documentElement.style.setProperty("--clock-scale", String(S.prefs.scale));
+  savePrefs();
+});
 rgScale.addEventListener("change",render);
-rgBright.addEventListener("input",()=>{S.prefs.bright=Number(rgBright.value); valBright.textContent=S.prefs.bright.toFixed(2); document.documentElement.style.setProperty("--clock-bright", String(S.prefs.bright)); savePrefs();});
+
+rgBright.addEventListener("input",()=>{
+  S.prefs.bright=Number(rgBright.value);
+  valBright.textContent=S.prefs.bright.toFixed(2);
+  document.documentElement.style.setProperty("--clock-bright", String(S.prefs.bright));
+  savePrefs();
+});
 rgBright.addEventListener("change",render);
-rgGlow.addEventListener("input",()=>{S.prefs.glow=Number(rgGlow.value); valGlow.textContent=S.prefs.glow.toFixed(2); document.documentElement.style.setProperty("--clock-glow", String(S.prefs.glow)); savePrefs();});
+
+rgGlow.addEventListener("input",()=>{
+  S.prefs.glow=Number(rgGlow.value);
+  valGlow.textContent=S.prefs.glow.toFixed(2);
+  document.documentElement.style.setProperty("--clock-glow", String(S.prefs.glow));
+  savePrefs();
+});
 rgGlow.addEventListener("change",render);
 
+/* visibility */
 document.addEventListener("visibilitychange",()=>{
   if(document.visibilityState==="visible" && S.run && S.end){
     S.left=Math.max(0, Math.round((S.end-Date.now())/1000));
@@ -902,7 +936,7 @@ document.addEventListener("visibilitychange",()=>{
   }
 });
 
-/* ========= init ========= */
+/* init */
 loadStats();
 loadPrefs();
 applyPrefs();
