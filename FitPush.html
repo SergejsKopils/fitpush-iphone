@@ -14,14 +14,13 @@
 
 <style>
 :root{
-  /* base */
   --bg:#000;
   --text:#ffffff;
   --muted:rgba(255,255,255,.55);
   --muted2:rgba(255,255,255,.28);
   --line:rgba(255,255,255,.10);
 
-  /* user settings (stored) */
+  /* user prefs */
   --clock-scale: 1.00;   /* 0.80..1.25 */
   --clock-bright: 1.00;  /* 0.50..1.40 */
   --clock-glow: 0.90;    /* 0.00..1.60 */
@@ -33,11 +32,12 @@ body{
   margin:0;
   background:var(--bg);
   color:var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Segoe UI", Tahoma, sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   overflow:hidden;
+  touch-action: pan-y; /* allow vertical scroll in settings */
 }
 
-/* The 2-screen slider */
+/* 2-screen slider */
 .viewport{
   position:fixed;
   inset:0;
@@ -45,6 +45,7 @@ body{
   background:#000;
 }
 
+/* IMPORTANT: width 200%, move 0% or -100% */
 .track{
   position:absolute;
   inset:0;
@@ -56,7 +57,6 @@ body{
   will-change:transform;
 }
 
-/* screens */
 .screen{
   width:100%;
   height:100%;
@@ -71,7 +71,7 @@ body{
   background:#000;
 }
 
-/* subtle vignette + very soft texture (like your reference black poster) */
+/* subtle “poster-like” black texture */
 .clock::before{
   content:"";
   position:absolute; inset:-30%;
@@ -79,11 +79,10 @@ body{
     radial-gradient(circle at 50% 48%, rgba(255,255,255,.05) 0%, rgba(0,0,0,0) 34%),
     radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,.95) 62%),
     linear-gradient(180deg, rgba(255,255,255,.02), transparent 40%, rgba(255,255,255,.01));
-  opacity:.85;
+  opacity:.9;
   pointer-events:none;
 }
 
-/* optional ultra subtle noise */
 .clock::after{
   content:"";
   position:absolute; inset:-40%;
@@ -97,13 +96,14 @@ body{
   position:absolute; inset:0;
   display:grid;
   place-items:center;
-  padding:24px;
+  padding: calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom));
 }
 
 .clock-time{
   transform:scale(var(--clock-scale));
   filter:brightness(var(--clock-bright));
   transform-origin:center;
+
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-variant-numeric: tabular-nums;
   letter-spacing:.10em;
@@ -116,18 +116,17 @@ body{
     0 0 calc(60px * var(--clock-glow)) rgba(255,255,255,.08);
 }
 
-/* seconds smaller (optional) */
 .clock-time .sec{
   font-size:.42em;
   opacity:.92;
   letter-spacing:.14em;
 }
 
-/* minimal page indicator (two dots) */
+/* page dots */
 .dots{
   position:absolute;
   left:50%;
-  bottom:16px;
+  bottom: max(14px, env(safe-area-inset-bottom));
   transform:translateX(-50%);
   display:flex;
   gap:10px;
@@ -142,17 +141,8 @@ body{
 }
 .dot.active{opacity:.95}
 
-/* edge swipe hint zone (invisible) */
-.edge{
-  position:absolute;
-  top:0; bottom:0;
-  width:18px;
-}
-.edge.right{right:0}
-.edge.left{left:0}
-
 /* =========================
-   SCREEN 2: SETTINGS (user-friendly)
+   SCREEN 2: SETTINGS (user friendly)
    ========================= */
 .settings{
   background:
@@ -161,6 +151,7 @@ body{
     #000;
   padding:calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
   overflow:auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .header{
@@ -317,7 +308,7 @@ input[type="range"]{
   color:rgba(255,255,255,.80);
 }
 
-/* mini grid buttons for presets */
+/* presets */
 .preset-grid{
   display:grid;
   grid-template-columns:repeat(4, minmax(0,1fr));
@@ -396,19 +387,14 @@ input[type="range"]{
         <div id="clockTime" class="clock-time">60:00</div>
       </div>
 
-      <!-- minimalist page dots -->
       <div class="dots" aria-hidden="true">
         <div class="dot active" id="dot0"></div>
         <div class="dot" id="dot1"></div>
       </div>
-
-      <!-- invisible edge zones to make swipe easier -->
-      <div class="edge left" aria-hidden="true"></div>
-      <div class="edge right" aria-hidden="true"></div>
     </section>
 
     <!-- SCREEN 2: SETTINGS -->
-    <section class="screen settings" aria-label="Settings">
+    <section class="screen settings" aria-label="Settings" id="settingsScreen">
       <div class="header">
         <div class="header-row">
           <div class="title">Settings</div>
@@ -468,21 +454,8 @@ input[type="range"]{
 
           <div class="row">
             <div class="label">
-              <div class="main">Full screen dial</div>
-              <div class="sub">Make digits fill the entire screen</div>
-            </div>
-            <div class="controls">
-              <label class="switch" id="swFullWrap">
-                <input type="checkbox" id="swFull" />
-                <span class="knob"></span>
-              </label>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="label">
               <div class="main">Dial size</div>
-              <div class="sub">Scale digits (desktop aesthetics)</div>
+              <div class="sub">Scale digits</div>
             </div>
             <div class="controls">
               <div class="range">
@@ -508,7 +481,7 @@ input[type="range"]{
           <div class="row">
             <div class="label">
               <div class="main">Glow</div>
-              <div class="sub">How much “light” around digits</div>
+              <div class="sub">Light around digits</div>
             </div>
             <div class="controls">
               <div class="range">
@@ -520,7 +493,7 @@ input[type="range"]{
         </div>
 
         <div class="card">
-          <h3>Notifications</h3>
+          <h3>Notifications & stats</h3>
 
           <div class="row">
             <div class="label">
@@ -546,32 +519,12 @@ input[type="range"]{
 
           <div class="row">
             <div class="label">
-              <div class="main">Reset preferences</div>
-              <div class="sub">Restore defaults (display only)</div>
-            </div>
-            <div class="controls">
-              <button class="btn danger" id="btnResetPrefs">Reset display</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>Navigation</h3>
-          <div class="row">
-            <div class="label">
               <div class="main">Back to clock</div>
               <div class="sub">Swipe right or tap button</div>
             </div>
             <div class="controls">
               <button class="btn primary" id="btnBack">Back</button>
             </div>
-          </div>
-          <div class="row">
-            <div class="label">
-              <div class="main">Shortcuts</div>
-              <div class="sub">Space: switch screens • S: start/pause • R: reset • N: reminder • F: full screen</div>
-            </div>
-            <div class="controls"></div>
           </div>
         </div>
 
@@ -601,8 +554,8 @@ input[type="range"]{
 /* =========================
    STATE + STORAGE
    ========================= */
-const KEY_STATS = "fitpush_stats_v2";
-const KEY_PREFS = "fitpush_prefs_v2";
+const KEY_STATS = "fitpush_stats_v3";
+const KEY_PREFS = "fitpush_prefs_v3";
 
 const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 const IS_STANDALONE = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
@@ -627,7 +580,6 @@ const S = {
   stats:{today:0,push:0,streak:0,last:""},
   prefs:{
     showSeconds:true,
-    fullScreen:false,
     scale:1.00,
     bright:1.00,
     glow:0.90
@@ -665,6 +617,8 @@ function loadPrefs(){
    DOM
    ========================= */
 const track = document.getElementById("track");
+const settingsScreen = document.getElementById("settingsScreen");
+
 const dot0 = document.getElementById("dot0");
 const dot1 = document.getElementById("dot1");
 
@@ -686,8 +640,6 @@ const stPush   = document.getElementById("stPush");
 
 const swSeconds = document.getElementById("swSeconds");
 const swSecondsWrap = document.getElementById("swSecondsWrap");
-const swFull = document.getElementById("swFull");
-const swFullWrap = document.getElementById("swFullWrap");
 
 const rgScale = document.getElementById("rgScale");
 const rgBright = document.getElementById("rgBright");
@@ -695,8 +647,6 @@ const rgGlow = document.getElementById("rgGlow");
 const valScale = document.getElementById("valScale");
 const valBright = document.getElementById("valBright");
 const valGlow = document.getElementById("valGlow");
-
-const btnResetPrefs = document.getElementById("btnResetPrefs");
 
 const overlay = document.getElementById("overlay");
 const mTitle = document.getElementById("mTitle");
@@ -709,72 +659,105 @@ const skip = document.getElementById("skip");
 const toastEl = document.getElementById("toast");
 
 /* =========================
-   SCREEN NAV (swipe)
+   PAGE NAV (fixed)
    ========================= */
 let page = 0; // 0 clock, 1 settings
 
 function setPage(p, animate=true){
   page = Math.max(0, Math.min(1, p));
   track.style.transition = animate ? "transform 280ms ease" : "none";
-  track.style.transform = `translateX(${-page*50}%)`; // 0% or -50% (because width is 200%)
+
+  // IMPORTANT: 0% or -100% (NOT -50%)
+  track.style.transform = `translateX(${-page*100}%)`;
+
   dot0.classList.toggle("active", page===0);
   dot1.classList.toggle("active", page===1);
 }
 
 btnBack.addEventListener("click", ()=>setPage(0,true));
 
-/* swipe detection */
+/* =========================
+   SWIPE (stable on iOS)
+   ========================= */
 let startX=0, startY=0, dragging=false;
 let lastDx=0;
+let lockedAxis=null; // "x" or "y"
+
+function isInteractive(el){
+  return !!el.closest("button, a, input, textarea, select, label");
+}
 
 function onStart(e){
   const t = e.touches ? e.touches[0] : e;
+
+  // if user started inside settings and on an interactive control -> don't hijack
+  if(page===1 && isInteractive(t.target)) return;
+
   startX = t.clientX;
   startY = t.clientY;
   dragging = true;
   lastDx = 0;
+  lockedAxis = null;
   track.style.transition = "none";
 }
+
 function onMove(e){
   if(!dragging) return;
   const t = e.touches ? e.touches[0] : e;
+
   const dx = t.clientX - startX;
   const dy = t.clientY - startY;
 
-  // if user scrolls vertically on settings, ignore horizontal drag
-  if(page===1 && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) return;
+  if(!lockedAxis){
+    if(Math.abs(dx) > 10 || Math.abs(dy) > 10){
+      lockedAxis = (Math.abs(dx) > Math.abs(dy)) ? "x" : "y";
+    }else{
+      return;
+    }
+  }
+
+  // if user scrolls vertically on settings -> allow scroll, stop drag
+  if(lockedAxis === "y"){
+    dragging = false;
+    setPage(page, true);
+    return;
+  }
 
   lastDx = dx;
 
-  // convert dx px -> percent of viewport width for smoother drag
   const vw = window.innerWidth;
-  const base = -page * 50;
-  const deltaPercent = (dx / vw) * 50;
+  const base = -page * 100;
+  const deltaPercent = (dx / vw) * 100;
   const pos = base + deltaPercent;
 
-  // clamp a bit (rubber band)
-  const clamped = Math.max(-50 - 10, Math.min(0 + 10, pos));
+  // small rubber band
+  const clamped = Math.max(-100 - 12, Math.min(0 + 12, pos));
   track.style.transform = `translateX(${clamped}%)`;
+
+  // prevent browser back gesture / overscroll jitter on iOS while horizontal dragging
+  if(e.cancelable) e.preventDefault();
 }
+
 function onEnd(){
   if(!dragging) return;
   dragging = false;
 
-  const threshold = Math.max(60, window.innerWidth * 0.12);
+  const threshold = Math.max(70, window.innerWidth * 0.15);
+
   if(lastDx < -threshold) setPage(1,true);
   else if(lastDx > threshold) setPage(0,true);
   else setPage(page,true);
 }
 
 document.addEventListener("touchstart", onStart, {passive:true});
-document.addEventListener("touchmove", onMove, {passive:true});
+document.addEventListener("touchmove", onMove, {passive:false});
 document.addEventListener("touchend", onEnd, {passive:true});
 
 document.addEventListener("mousedown", onStart);
 document.addEventListener("mousemove", onMove);
 document.addEventListener("mouseup", onEnd);
 
-/* keyboard shortcuts */
+/* keyboard */
 document.addEventListener("keydown",(e)=>{
   const k = e.key.toLowerCase();
   if(e.code==="Space"){
@@ -787,11 +770,6 @@ document.addEventListener("keydown",(e)=>{
   if(k==="s"){ S.run ? pause() : start(); }
   if(k==="r"){ reset(); }
   if(k==="n"){ fire("manual"); }
-  if(k==="f"){
-    S.prefs.fullScreen = !S.prefs.fullScreen;
-    applyPrefs();
-    toast(S.prefs.fullScreen ? "Full screen" : "Normal");
-  }
   if(k==="escape"){ overlay.classList.remove("show"); }
 });
 
@@ -799,14 +777,9 @@ document.addEventListener("keydown",(e)=>{
    PREFS APPLY
    ========================= */
 function applyPrefs(){
-  // switches UI
   swSeconds.checked = !!S.prefs.showSeconds;
   swSecondsWrap.classList.toggle("on", swSeconds.checked);
 
-  swFull.checked = !!S.prefs.fullScreen;
-  swFullWrap.classList.toggle("on", swFull.checked);
-
-  // sliders UI
   rgScale.value = String(S.prefs.scale);
   rgBright.value = String(S.prefs.bright);
   rgGlow.value = String(S.prefs.glow);
@@ -815,13 +788,9 @@ function applyPrefs(){
   valBright.textContent = Number(S.prefs.bright).toFixed(2);
   valGlow.textContent = Number(S.prefs.glow).toFixed(2);
 
-  // CSS vars
   document.documentElement.style.setProperty("--clock-scale", String(S.prefs.scale));
   document.documentElement.style.setProperty("--clock-bright", String(S.prefs.bright));
   document.documentElement.style.setProperty("--clock-glow", String(S.prefs.glow));
-
-  // full screen class
-  document.body.classList.toggle("fullscreen-dial", !!S.prefs.fullScreen);
 
   savePrefs();
   render();
@@ -844,14 +813,14 @@ function fmtMMSS_html(s){
 }
 
 function render(){
-  // main clock screen output
+  // clock output
   if(S.prefs.showSeconds){
     clockTime.innerHTML = fmtMMSS_html(S.left);
   }else{
     clockTime.textContent = fmtMM(S.left);
   }
 
-  // status badge (settings)
+  // status badge
   if(S.run) statusBadge.textContent="В работе";
   else if(S.left!==S.total) statusBadge.textContent="Пауза";
   else statusBadge.textContent="Ожидание";
@@ -861,7 +830,6 @@ function render(){
   stStreak.textContent = String(S.stats.streak||0);
   stPush.textContent = String(S.stats.push||0);
 
-  // title (keep minimal)
   document.title = (S.run ? fmtMMSS_plain(S.left)+" · " : "") + "FitPush";
 }
 
@@ -873,7 +841,6 @@ function pick(min){
   if(S.id){ clearInterval(S.id); S.id=null; }
   S.run=false;
 
-  // active preset
   presetGrid.querySelectorAll(".preset").forEach(b=>{
     b.classList.toggle("active", Number(b.dataset.min)===min);
   });
@@ -911,7 +878,7 @@ function reset(){
 }
 
 /* =========================
-   REMINDER FLOW
+   REMINDER
    ========================= */
 function fire(src){
   S.cur = EX[Math.floor(Math.random()*EX.length)];
@@ -921,6 +888,7 @@ function fire(src){
   overlay.classList.add("show");
   sound(); vib(); notify(S.cur.n+" - "+S.cur.d);
 }
+
 function doneAction(){
   if(!S.cur) return;
   S.stats.today += 1;
@@ -930,8 +898,7 @@ function doneAction(){
 
   S.cur=null;
   overlay.classList.remove("show");
-  reset();
-  start();
+  reset(); start();
 }
 function skipAction(){
   S.cur=null;
@@ -947,7 +914,7 @@ function snoozeAction(){
 }
 
 /* =========================
-   NOTIFICATIONS
+   NOTIFS
    ========================= */
 function sound(){
   try{
@@ -990,7 +957,7 @@ function notify(body){
 }
 
 /* =========================
-   TOAST
+   TOAST + PWA
    ========================= */
 function toast(msg){
   toastEl.textContent = msg;
@@ -998,9 +965,6 @@ function toast(msg){
   setTimeout(()=>toastEl.classList.remove("show"), 2200);
 }
 
-/* =========================
-   PWA
-   ========================= */
 function pwa(){
   if(!("serviceWorker" in navigator)) return;
   const ok = location.protocol==="https:" || location.hostname==="localhost" || location.hostname==="127.0.0.1";
@@ -1031,11 +995,6 @@ swSeconds.addEventListener("change", ()=>{
   swSecondsWrap.classList.toggle("on", swSeconds.checked);
   savePrefs(); render();
 });
-swFull.addEventListener("change", ()=>{
-  S.prefs.fullScreen = swFull.checked;
-  swFullWrap.classList.toggle("on", swFull.checked);
-  applyPrefs();
-});
 
 rgScale.addEventListener("input", ()=>{
   S.prefs.scale = Number(rgScale.value);
@@ -1060,12 +1019,6 @@ rgGlow.addEventListener("input", ()=>{
   savePrefs();
 });
 rgGlow.addEventListener("change", render);
-
-btnResetPrefs.addEventListener("click", ()=>{
-  S.prefs = { showSeconds:true, fullScreen:false, scale:1.00, bright:1.00, glow:0.90 };
-  applyPrefs();
-  toast("Display reset");
-});
 
 /* keep timer correct after tab switch */
 document.addEventListener("visibilitychange", ()=>{
